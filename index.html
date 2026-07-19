@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGym - Hệ thống Rèn luyện 10 Cấp độ Tư duy</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        (function() {
+            function initTailwind() {
+                if (typeof tailwind !== 'undefined') {
+                    tailwind.config = {
+                        darkMode: 'class',
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    sans: ['Inter', 'sans-serif'],
+                                },
+                                colors: {
+                                    primary: {
+                                        50: '#f5f7fa',
+                                        100: '#e4ebf3',
+                                        200: '#c2d2e4',
+                                        500: '#1b365d',
+                                        600: '#152b4b',
+                                        700: '#0f2038',
+                                        800: '#0a1525',
+                                        900: '#050a12',
+                                    },
+                                    secondary: {
+                                        50: '#ecfdf5',
+                                        500: '#10b981',
+                                        600: '#059669',
+                                    }
+                                }
+                            }
+                        }
+                    };
+                } else {
+                    setTimeout(initTailwind, 20);
+                }
+            }
+            initTailwind();
+        })();
+    </script>
+    
+    <!-- Alpine.js for interactive state management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Marked.js for parsing Markdown feedback from Gemini AI -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.7);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300 font-sans antialiased flex flex-col" x-data="mindGymApp()" x-init="initApp()">
+
+    <!-- Navigation / Header -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 glass-panel transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-gradient-to-tr from-primary-500 to-indigo-600 rounded-xl text-white shadow-md shadow-primary-500/20">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-primary-500 to-indigo-600 dark:from-indigo-400 dark:to-emerald-400 bg-clip-text text-transparent">MindGym</h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">HỆ THỐNG RÈN LUYỆN 10 CẤP ĐỘ TƯ DUY</p>
+                </div>
+            </div>
+
+            <!-- Stats & Theme Control -->
+            <div class="flex items-center gap-4">
+                <!-- Global Progress Badge -->
+                <div class="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full text-xs font-semibold">
+                    <span class="text-slate-500">Hoàn thành:</span>
+                    <span class="text-emerald-600 dark:text-emerald-400" x-text="`${calculateGlobalProgress()}%`">(15%)</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-primary-500 dark:text-indigo-400" x-text="`${countCompletedExercises()}/100 bài`">15/100</span>
+                </div>
+
+                <!-- Theme Toggle Button -->
+                <button @click="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition" title="Chuyển chế độ Sáng / Tối">
+                    <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                </button>
+
+                <!-- Export Portfolio -->
+                <button @click="exportPortfolio()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 transition-all">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Tải Học Bạ (.txt)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6 overflow-hidden">
+        
+        <!-- Left Sidebar: Level Navigation -->
+        <aside class="w-full md:w-80 flex flex-col gap-4 flex-shrink-0">
+            <div class="bg-white dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col gap-3">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Hành trình 10 Cấp Độ</h3>
+                
+                <div class="flex flex-col gap-2 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
+                    <template x-for="lvl in levels" :key="lvl.number">
+                        <button 
+                            @click="selectLevel(lvl.number)"
+                            class="w-full flex items-center justify-between p-3 rounded-xl transition text-left group border"
+                            :class="selectedLevel === lvl.number ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200' : 'bg-slate-50/50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-800/50 border-transparent text-slate-700 dark:text-slate-300'"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm"
+                                     :class="selectedLevel === lvl.number ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-slate-300 dark:group-hover:bg-slate-700'"
+                                     x-text="lvl.number">
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xs" x-text="lvl.name"></h4>
+                                    <p class="text-[10px] text-slate-400 font-medium" x-text="`${lvl.subName} (${calculateLevelProgress(lvl.number)}%)`"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- Level Completion Ring -->
+                            <div class="relative w-5 h-5 flex items-center justify-center">
+                                <svg class="w-5 h-5 transform -rotate-90">
+                                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="transparent" class="text-slate-200 dark:text-slate-800" />
+                                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="transparent" 
+                                            :stroke-dasharray="50.24" 
+                                            :stroke-dashoffset="50.24 - (50.24 * calculateLevelProgress(lvl.number)) / 100" 
+                                            class="text-indigo-600 dark:text-indigo-400" />
+                                </svg>
+                                <span class="absolute text-[8px] font-bold" x-text="`${countCompletedInLevel(lvl.number)}`"></span>
+                            </div>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center / Right Panel: Active Level Dashboard & Workspace -->
+        <section class="flex-1 flex flex-col gap-4 overflow-hidden min-w-0">
+            
+            <!-- Active Level Banner -->
+            <div class="bg-gradient-to-r from-primary-500 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl relative overflow-hidden shadow-lg border border-slate-800">
+                <div class="absolute -right-10 -bottom-10 opacity-10">
+                    <i data-lucide="brain" class="w-48 h-48"></i>
+                </div>
+                <div class="relative z-10">
+                    <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border border-emerald-500/30" x-text="`Cấp Độ ${selectedLevel}`"></span>
+                    <h2 class="text-2xl font-black mt-2 tracking-tight" x-text="levels[selectedLevel - 1].name"></h2>
+                    <p class="text-xs text-slate-300 mt-1 max-w-xl font-medium" x-text="levels[selectedLevel - 1].goal"></p>
+                </div>
+            </div>
+
+            <!-- Main Panel: Split into Exercise Selection Grid OR Active Workspace -->
+            <div class="flex-1 flex flex-col lg:flex-row gap-4 overflow-hidden min-h-0">
+                
+                <!-- Level Exercises Grid -->
+                <div class="w-full lg:w-2/5 flex flex-col gap-3 overflow-y-auto pr-1 min-h-[250px] lg:min-h-0">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Danh sách 10 bài tập rèn luyện</h3>
+                    
+                    <div class="flex flex-col gap-2">
+                        <template x-for="ex in filteredExercises()" :key="ex.id">
+                            <button 
+                                @click="selectExercise(ex.id)"
+                                class="w-full p-3.5 rounded-xl text-left border transition relative flex items-start gap-3.5 group"
+                                :class="selectedExerciseId === ex.id ? 'bg-white dark:bg-slate-800/80 border-indigo-500 shadow-sm shadow-indigo-500/5' : 'bg-white dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800 border-slate-200/80 dark:border-slate-800/80'"
+                            >
+                                <!-- Status Dot Indicator -->
+                                <div class="mt-1.5 flex-shrink-0">
+                                    <span class="block w-2.5 h-2.5 rounded-full" 
+                                          :class="getExerciseStatusClass(ex.id)">
+                                    </span>
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500 transition" x-text="`Bài ${ex.number}`"></span>
+                                        <span class="text-[9px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 font-semibold" x-text="ex.skill"></span>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 mt-1 leading-snug truncate" x-text="ex.title"></h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5" x-text="ex.description.split('\n')[0]"></p>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Active Workspace Zone -->
+                <div class="flex-1 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col overflow-hidden min-w-0">
+                    <template x-if="activeExercise">
+                        <div class="flex-1 flex flex-col overflow-hidden">
+                            <!-- Workspace Header -->
+                            <div class="p-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/20 flex items-center justify-between gap-3 flex-shrink-0">
+                                <div>
+                                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide" x-text="`Cấp độ ${selectedLevel} / Bài ${activeExercise.number}`"></span>
+                                    <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100" x-text="activeExercise.title"></h3>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <!-- Current status pill -->
+                                    <span class="text-[10px] px-2.5 py-1 rounded-full font-bold"
+                                          :class="getExerciseStatusLabelClass(activeExercise.id)"
+                                          x-text="getExerciseStatusLabel(activeExercise.id)">
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Split Workspace Content: Prompts & Textarea -->
+                            <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                                <!-- Left side of split: Instructions -->
+                                <div class="w-full md:w-5/12 p-4 border-b md:border-b-0 md:border-r border-slate-200/80 dark:border-slate-800/80 overflow-y-auto flex flex-col gap-4">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Yêu cầu đề bài
+                                        </h4>
+                                        <div class="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
+                                            <pre class="text-[11px] font-sans text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line" x-text="activeExercise.description"></pre>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <i data-lucide="award" class="w-3.5 h-3.5"></i> Kỹ năng rèn luyện
+                                        </h4>
+                                        <div class="flex items-center gap-2 bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-900/50">
+                                            <div class="p-1.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200" x-text="activeExercise.skill"></p>
+                                                <p class="text-[10px] text-slate-500 dark:text-slate-400">Ứng dụng trực tiếp kỹ năng vào cuộc sống thực tế.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right side of split: Answer Sheet & AI Coach -->
+                                <div class="flex-1 flex flex-col overflow-hidden">
+                                    <!-- Tabs: Soạn thảo vs Phản hồi AI -->
+                                    <div class="flex border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/30 flex-shrink-0">
+                                        <button @click="activeWorkspaceTab = 'write'" class="flex-1 py-2 text-xs font-bold border-b-2 transition" :class="activeWorkspaceTab === 'write' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600'">
+                                            Bài viết rèn luyện
+                                        </button>
+                                        <button @click="activeWorkspaceTab = 'ai'" class="flex-1 py-2 text-xs font-bold border-b-2 transition flex items-center justify-center gap-1.5" :class="activeWorkspaceTab === 'ai' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600'">
+                                            <i data-lucide="bot" class="w-3.5 h-3.5"></i> Nhận xét AI Coach
+                                        </button>
+                                    </div>
+
+                                    <!-- Tab Content: Writing Area -->
+                                    <div x-show="activeWorkspaceTab === 'write'" class="flex-1 flex flex-col p-4 overflow-hidden">
+                                        <div class="flex-1 flex flex-col gap-2 min-h-0">
+                                            <label class="text-[11px] font-semibold text-slate-400">Bắt đầu viết suy nghĩ của bạn vào ô dưới đây:</label>
+                                            <textarea 
+                                                x-model="answers[activeExercise.id].text"
+                                                @input="saveToSession()"
+                                                class="flex-1 w-full p-3 text-xs bg-slate-50 focus:bg-white dark:bg-slate-900/30 focus:dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl focus:outline-none resize-none font-mono leading-relaxed"
+                                                placeholder="--- BÀI LÀM CỦA BẠN ---&#10;Ghi chép chi tiết, đánh giá trực tiếp theo các tiêu chí đã định sẵn ở khung đề bài..."
+                                            ></textarea>
+                                        </div>
+
+                                        <div class="mt-3 flex items-center justify-between gap-3 flex-shrink-0">
+                                            <span class="text-[10px] text-slate-400 font-medium" x-text="`Độ dài: ${answers[activeExercise.id].text.length} ký tự`"></span>
+                                            
+                                            <div class="flex items-center gap-2">
+                                                <button @click="markAsComplete(activeExercise.id)" class="px-3.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 transition">
+                                                    Đã làm xong
+                                                </button>
+                                                <button @click="getAICoachReview()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/10 transition-all flex items-center gap-1.5">
+                                                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                                    <span>AI Coach chấm điểm</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tab Content: AI Coach Feedback -->
+                                    <div x-show="activeWorkspaceTab === 'ai'" class="flex-1 flex flex-col p-4 overflow-hidden relative">
+                                        
+                                        <!-- No feedback yet state -->
+                                        <div x-show="!answers[activeExercise.id].feedback && !isLoadingFeedback" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                            <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                                            </div>
+                                            <h4 class="font-bold text-sm text-slate-700 dark:text-slate-300">Chưa có đánh giá từ AI Coach</h4>
+                                            <p class="text-xs text-slate-500 max-w-xs mt-1">Hãy viết hoàn thành bài làm ở tab bên cạnh sau đó nhấn nút "AI Coach chấm điểm" để nhận phản hồi phân tích đa chiều.</p>
+                                            <button @click="getAICoachReview()" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/10 transition">
+                                                Yêu cầu AI Phân tích bài làm
+                                            </button>
+                                        </div>
+
+                                        <!-- Loading AI feedback state -->
+                                        <div x-show="isLoadingFeedback" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-slate-900/80 z-10 p-6 text-center">
+                                            <div class="relative w-12 h-12">
+                                                <div class="absolute inset-0 border-4 border-indigo-200 dark:border-indigo-900 rounded-full"></div>
+                                                <div class="absolute inset-0 border-4 border-indigo-600 dark:border-indigo-400 rounded-full border-t-transparent animate-spin"></div>
+                                            </div>
+                                            <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200 mt-4 animate-pulse">AI Coach đang phân tích luận điểm...</h4>
+                                            <p class="text-xs text-slate-500 mt-1 max-w-xs">Đang áp dụng mô hình Gemini để rà soát quy tắc suy luận và đánh giá cấu trúc bài làm của bạn.</p>
+                                        </div>
+
+                                        <!-- Rendered Markdown Feedback -->
+                                        <div x-show="answers[activeExercise.id].feedback && !isLoadingFeedback" class="flex-1 overflow-y-auto pr-1">
+                                            <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/50 mb-3 flex items-start gap-3">
+                                                <div class="p-2 bg-indigo-600 text-white rounded-lg flex-shrink-0">
+                                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="text-xs font-bold text-indigo-950 dark:text-indigo-200">Đại sảnh Tư duy AI Coach</h4>
+                                                    <p class="text-[10px] text-slate-500 mt-0.5">Nhận xét này dựa trên mô hình tư duy đa chiều và kiểm thử logic phản biện.</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="prose prose-sm prose-slate dark:prose-invert max-w-none text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans"
+                                                 x-html="renderMarkdown(answers[activeExercise.id].feedback)">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Alpine.js Application Logic -->
+    <script>
+        function mindGymApp() {
+            return {
+                darkMode: false,
+                levels: [
+                    { number: 1, name: "Quan sát (Observation)", subName: "Quan sát đa chiều", goal: "Rèn luyện khả năng thu thập thông tin chuẩn xác và nhận biết thế giới chi tiết thông qua mọi giác quan." },
+                    { number: 2, name: "So sánh (Comparison)", subName: "Lập luận đối sánh", goal: "Nhận biết điểm đồng nhất, khác biệt cấu trúc và tạo lập bộ tiêu chí đánh giá khoa học giữa các thực thể." },
+                    { number: 3, name: "Phân loại (Classification)", subName: "Cấu trúc hệ thống", goal: "Rèn luyện khả năng sắp xếp, xây dựng sơ đồ phân cấp thông tin và tìm kiếm quy luật logic ẩn." },
+                    { number: 4, name: "Phân tích (Analysis)", subName: "Mổ xẻ thành phần", goal: "Chia nhỏ đối tượng, quy trình hoặc hệ thống để hiểu rõ cấu tạo, cơ chế phối hợp hoạt động." },
+                    { number: 5, name: "Tư duy nhân quả (Cause & Effect)", subName: "Phân tích hệ quả", goal: "Đào sâu nguyên nhân gốc rễ, xây dựng chuỗi tác động dây chuyền và vòng lặp phản hồi của sự vật." },
+                    { number: 6, name: "Suy luận (Reasoning)", subName: "Kết luận logic", goal: "Rút ra quy luật tổng quát từ trường hợp cụ thể hoặc lập luận phân rã từ các quy chuẩn cốt lõi." },
+                    { number: 7, name: "Đặt giả thuyết (Hypothesis Generation)", subName: "Kiểm nghiệm kịch bản", goal: "Chủ động tạo dựng khả năng lý giải khoa học mới và lập phương pháp kiểm chứng thực nghiệm." },
+                    { number: 8, name: "Đánh giá (Evaluation)", subName: "Nhận định đa góc nhìn", goal: "Đưa ra phán quyết, thẩm định độ tin cậy và xếp hạng tối ưu giải pháp bằng chỉ số đo lường thực tế." },
+                    { number: 9, name: "Sáng tạo (Creation)", subName: "Thiết kế đổi mới", goal: "Vận dụng tối đa trí tưởng tượng, cải tiến sản phẩm và liên kết ý tưởng đột phá giải quyết bài toán khó." },
+                    { number: 10, name: "Giải quyết vấn đề tổng hợp (Problem Solving)", subName: "Quy trình khép kín", goal: "Áp dụng thuần thục chu trình tư duy 10 bước để trực tiếp xử lý các khó khăn thực tế đa khía cạnh." }
+                ],
+                exercises: [
+                    // LEVEL 1
+                    { id: "L1-E1", level: 1, number: 1, title: "Quan sát đồ vật", skill: "Quan sát đặc điểm", description: "Chọn một chiếc bút.\nViết ra:\n1. Màu sắc\n2. Hình dạng\n3. Chất liệu\n4. Kích thước ước lượng\n5. Có bao nhiêu bộ phận" },
+                    { id: "L1-E2", level: 1, number: 2, title: "Quan sát căn phòng", skill: "Tổng quan & không gian", description: "Trong 2 phút, nhìn quanh phòng.\nViết:\n20 đồ vật nhìn thấy.\nĐồ vật nào lớn nhất?\nĐồ vật nào nhỏ nhất?" },
+                    { id: "L1-E3", level: 1, number: 3, title: "Quan sát con người", skill: "Chi tiết hành vi", description: "Quan sát một người trong gia đình.\nGhi:\nTrang phục\nKiểu tóc\nNét mặt\nTư thế\nHọ đang làm gì" },
+                    { id: "L1-E4", level: 1, number: 4, title: "Quan sát thiên nhiên", skill: "Hệ sinh thái", description: "Ra ngoài quan sát một cái cây.\nViết:\nMàu lá\nHình dáng thân\nCó bao nhiêu cành lớn\nCó hoa hay quả không\nCó sinh vật nào sống trên cây?" },
+                    { id: "L1-E5", level: 1, number: 5, title: "Quan sát bằng nhiều giác quan", skill: "Đa giác quan", description: "Quan sát một quả cam.\nMô tả:\nNhìn thấy gì?\nSờ thấy gì?\nNgửi thấy gì?\nNếm thấy gì? (nếu được)\nNghe thấy gì khi bóp nhẹ?" },
+                    { id: "L1-E6", level: 1, number: 6, title: "Quan sát sự thay đổi", skill: "Tiến trình thời gian", description: "Đặt một cốc nước ngoài trời trong 30 phút.\nGhi lại:\nBan đầu\nSau 10 phút\nSau 20 phút\nSau 30 phút\nCó gì thay đổi?" },
+                    { id: "L1-E7", level: 1, number: 7, title: "Quan sát chi tiết", skill: "Chi tiết chuyên sâu", description: "Quan sát một chiếc xe máy.\nLiệt kê ít nhất 30 chi tiết khác nhau mà bạn nhìn thấy." },
+                    { id: "L1-E8", level: 1, number: 8, title: "Quan sát và ghi nhớ", skill: "Ghi nhớ ngắn hạn", description: "Nhìn một bức tranh trong 60 giây.\nChe bức tranh lại.\nViết:\n20 chi tiết còn nhớ.\nSau đó mở lại và xem mình nhớ đúng bao nhiêu." },
+                    { id: "L1-E9", level: 1, number: 9, title: "Quan sát có mục tiêu", skill: "Phân tích định hướng", description: "Quan sát một cửa hàng.\nGhi:\nCó bao nhiêu khách?\nCó bao nhiêu nhân viên?\nNhững mặt hàng nổi bật?\nMàu sắc chủ đạo?\nCách sắp xếp hàng hóa?" },
+                    { id: "L1-E10", level: 1, number: 10, title: "Quan sát và đặt câu hỏi", skill: "Quan sát nâng cao", description: "Quan sát một ngã tư trong 5 phút.\nViết:\n30 điều quan sát được.\n15 điều bạn suy đoán.\n10 câu hỏi nảy sinh từ những gì đã quan sát." },
+
+                    // LEVEL 2
+                    { id: "L2-E1", level: 2, number: 1, title: "So sánh hai đồ vật", skill: "So sánh đặc điểm", description: "Đối tượng: Bút bi và bút chì.\nYêu cầu:\n10 điểm giống.\n10 điểm khác.\nKết luận: Khi nào nên dùng từng loại?" },
+                    { id: "L2-E2", level: 2, number: 2, title: "So sánh theo tiêu chí", skill: "So sánh theo tiêu chí", description: "Đối tượng: Xe đạp và xe máy.\nLập bảng gồm các tiêu chí:\nGiá, Tốc độ, Chi phí, An toàn, Bảo dưỡng, Bảo vệ môi trường.\nĐánh giá mỗi tiêu chí theo thang điểm 1–5." },
+                    { id: "L2-E3", level: 2, number: 3, title: "So sánh theo thời gian", skill: "So sánh theo thời gian", description: "Đối tượng: Cuộc sống của em.\nSo sánh:\nKhi học lớp 1.\nHiện nay.\nCác mặt:\nKiến thức, Bạn bè, Kỹ năng, Sở thích, Trách nhiệm" },
+                    { id: "L2-E4", level: 2, number: 4, title: "So sánh theo chức năng", skill: "So sánh chức năng", description: "Đối tượng: Quạt điện và máy lạnh.\nSo sánh:\nChức năng chính, Chức năng phụ, Điểm mạnh, Điểm yếu.\nKết luận nên dùng trong trường hợp nào." },
+                    { id: "L2-E5", level: 2, number: 5, title: "So sánh theo cấu tạo", skill: "So sánh cấu tạo", description: "Đối tượng: Xe máy và xe đạp.\nVẽ hoặc liệt kê các bộ phận.\nĐánh dấu:\nBộ phận giống nhau.\nBộ phận khác nhau." },
+                    { id: "L2-E6", level: 2, number: 6, title: "So sánh nguyên nhân – kết quả", skill: "So sánh nhân quả", description: "Đối tượng: Học chăm và học lười.\nLập bảng:\nNguyên nhân, Hành động, Kết quả ngắn hạn, Kết quả dài hạn." },
+                    { id: "L2-E7", level: 2, number: 7, title: "So sánh nhiều đối tượng", skill: "So sánh nhiều đối tượng", description: "Đối tượng: Táo, cam và chuối.\nSo sánh theo:\nMàu sắc, Hương vị, Giá, Giá trị dinh dưỡng, Cách sử dụng.\nCuối cùng xếp hạng theo từng tiêu chí." },
+                    { id: "L2-E8", level: 2, number: 8, title: "So sánh hai cách giải quyết", skill: "So sánh phương án", description: "Tình huống: Đi học.\nCách 1: Xe đạp.\nCách 2: Xe buýt.\nSo sánh:\nChi phí, Thời gian, Sức khỏe, An toàn, Tính chủ động.\nSau đó chọn phương án phù hợp và giải thích." },
+                    { id: "L2-E9", level: 2, number: 9, title: "So sánh theo góc nhìn", skill: "So sánh đa góc nhìn", description: "Đối tượng: Điện thoại thông minh.\nSo sánh lợi ích và hạn chế dưới góc nhìn của:\nHọc sinh, Phụ huynh, Giáo viên, Nhà sản xuất." },
+                    { id: "L2-E10", level: 2, number: 10, title: "So sánh để ra quyết định", skill: "So sánh ra quyết định", description: "Tình huống: Em có 10 triệu đồng.\nLựa chọn: Mua máy tính, Mua xe đạp, Gửi tiết kiệm.\nSo sánh theo:\nChi phí, Lợi ích, Rủi ro, Giá trị lâu dài, Mức độ cần thiết.\nViết kết luận khoảng 150–200 từ, giải thích vì sao em chọn phương án đó." },
+
+                    // LEVEL 3
+                    { id: "L3-E1", level: 3, number: 1, title: "Phân loại theo một tiêu chí", skill: "Phân loại một tiêu chí", description: "Cho các từ:\nTáo, Cam, Chuối, Cà rốt, Khoai tây, Rau muống, Cải xanh, Dưa hấu, Xoài, Bắp cải.\nYêu cầu:\nChia thành các nhóm hợp lý.\nNêu tiêu chí phân loại.\nGiải thích vì sao chọn tiêu chí đó." },
+                    { id: "L3-E2", level: 3, number: 2, title: "Phân loại theo nhiều tiêu chí", skill: "Phân loại đa tiêu chí", description: "Cho các con vật:\nChó, Mèo, Cá vàng, Gà, Chim sẻ, Rắn, Cá sấu, Cá chép, Bò, Vịt.\nHãy phân loại theo:\nMôi trường sống, Cách di chuyển, Thức ăn, Hình thức sinh sản." },
+                    { id: "L3-E3", level: 3, number: 3, title: "Phân loại theo cấp bậc", skill: "Phân loại phân cấp", description: "Chủ đề: Phương tiện giao thông\nXây dựng sơ đồ cây từ lớn đến nhỏ.\nVí dụ:\nĐường bộ\nĐường sắt\nĐường thủy\nĐường hàng không\nSau đó chia nhỏ tiếp từng nhóm." },
+                    { id: "L3-E4", level: 3, number: 4, title: "Phân loại theo mức độ", skill: "Phân loại theo mức độ", description: "Sắp xếp các hoạt động sau theo mức tiêu thụ năng lượng từ thấp đến cao:\nNgủ, Đọc sách, Đi bộ, Chạy bộ, Bơi, Đạp xe, Leo núi.\nGiải thích cách sắp xếp." },
+                    { id: "L3-E5", level: 3, number: 5, title: "Phân loại theo chức năng", skill: "Phân loại theo công dụng", description: "Cho các đồ vật:\nBúa, Kìm, Tua vít, Máy khoan, Cưa, Thước, Kéo, Dao rọc giấy, Cờ lê, Mỏ lết.\nHãy nhóm theo chức năng sử dụng." },
+                    { id: "L3-E6", level: 3, number: 6, title: "Phân loại theo mối quan hệ", skill: "Phân loại mối quan hệ", description: "Cho các từ:\nGiáo viên, Học sinh, Trường học, Lớp học, Bảng, Phấn, Sách giáo khoa, Bài kiểm tra, Điểm số, Phụ huynh.\nHãy chia thành các nhóm có quan hệ với nhau và vẽ sơ đồ liên kết." },
+                    { id: "L3-E7", level: 3, number: 7, title: "Phân loại theo quy luật", skill: "Phân loại theo quy luật", description: "Cho dãy:\n2, 4, 6, 7, 8, 10, 12, 13, 14, 16, 18.\nHãy chia các số thành các nhóm theo ít nhất 3 quy luật khác nhau.\nVí dụ:\nChẵn – lẻ, Chia hết cho..., Số nguyên tố – hợp số" },
+                    { id: "L3-E8", level: 3, number: 8, title: "Phân loại theo góc nhìn", skill: "Mục đích sử dụng", description: "Đối tượng: Điện thoại thông minh\nHãy phân loại các tính năng của điện thoại theo góc nhìn:\nHọc tập, Giải trí, Công việc, Liên lạc, Bảo mật.\nMột tính năng có thể thuộc nhiều nhóm nếu có lý do hợp lý." },
+                    { id: "L3-E9", level: 3, number: 9, title: "Phân loại thông tin quan trọng", skill: "Phân loại thông tin", description: "Đọc một bài báo khoảng 500 từ.\nChia thông tin thành các nhóm:\nSự kiện, Nguyên nhân, Hậu quả, Ý kiến, Số liệu, Giải pháp." },
+                    { id: "L3-E10", level: 3, number: 10, title: "Tự xây dựng hệ thống phân loại", skill: "Thiết kế hệ thống", description: "Chọn một chủ đề bất kỳ, ví dụ:\nSách, Phim, Món ăn, Nghề nghiệp, Cây trồng, Thiết bị điện tử.\nYêu cầu:\n1. Xây dựng ít nhất 4 cấp phân loại.\n2. Mỗi cấp có tối thiểu 3 nhóm.\n3. Đưa ra ít nhất 30 ví dụ.\n4. Giải thích vì sao hệ thống phân loại của em hợp lý." },
+
+                    // LEVEL 4
+                    { id: "L4-E1", level: 4, number: 1, title: "Phân tích cấu tạo", skill: "Phân tích cấu tạo", description: "Đối tượng: Xe đạp.\nYêu cầu:\nLiệt kê tất cả các bộ phận chính.\nChia thành các hệ thống (khung, truyền động, phanh, lái, bánh xe...).\nMô tả chức năng của từng bộ phận.\nNếu thiếu một bộ phận thì điều gì xảy ra?" },
+                    { id: "L4-E2", level: 4, number: 2, title: "Phân tích quy trình", skill: "Phân tích quy trình", description: "Đối tượng: Nấu cơm bằng nồi cơm điện.\nYêu cầu:\nChia thành các bước theo thứ tự.\nXác định đầu vào và đầu ra của mỗi bước.\nBước nào quan trọng nhất? Vì sao?\nNếu bỏ qua một bước thì hậu quả gì?" },
+                    { id: "L4-E3", level: 4, number: 3, title: "Phân tích hệ thống", skill: "Phân tích hệ thống", description: "Đối tượng: Một trường học.\nYêu cầu:\nXác định các thành phần của hệ thống.\nVẽ sơ đồ mối liên hệ giữa:\nHọc sinh, Giáo viên, Ban giám hiệu, Phụ huynh, Cơ sở vật chất.\nThành phần nào ảnh hưởng nhiều nhất đến chất lượng học tập?" },
+                    { id: "L4-E4", level: 4, number: 4, title: "Phân tích nguyên nhân gốc rễ", skill: "Phân tích 5 Whys", description: "Tình huống: Một học sinh thường xuyên đi học muộn.\nYêu cầu:\nTìm ít nhất 5 nguyên nhân trực tiếp.\nVới mỗi nguyên nhân, tiếp tục hỏi \"Tại sao?\" thêm 3 lần để tìm nguyên nhân gốc.\nĐề xuất giải pháp cho từng nguyên nhân gốc." },
+                    { id: "L4-E5", level: 4, number: 5, title: "Phân tích chức năng", skill: "Phân tích chức năng", description: "Đối tượng: Điện thoại thông minh.\nYêu cầu:\nLiệt kê các chức năng.\nChia thành:\nChức năng chính, Chức năng hỗ trợ, Chức năng giải trí, Chức năng bảo mật.\nChức năng nào quan trọng nhất đối với học sinh?" },
+                    { id: "L4-E6", level: 4, number: 6, title: "Phân tích dữ liệu", skill: "Phân tích dữ liệu", description: "Cho bảng điểm của 10 học sinh ở 3 môn.\nYêu cầu:\nTìm học sinh có điểm cao nhất và thấp nhất.\nXác định môn học mạnh và yếu của từng học sinh.\nNhận xét xu hướng chung của cả lớp.\nĐề xuất biện pháp cải thiện." },
+                    { id: "L4-E7", level: 4, number: 7, title: "Phân tích tình huống", skill: "Phân tích tình huống", description: "Tình huống: Một cửa hàng bán ít khách hơn tháng trước.\nYêu cầu:\nThu thập các yếu tố có thể ảnh hưởng.\nChia thành:\nYếu tố bên trong, Yếu tố bên ngoài.\nXác định 3 nguyên nhân có khả năng cao nhất.\nĐề xuất giải pháp tương ứng." },
+                    { id: "L4-E8", level: 4, number: 8, title: "Phân tích văn bản", skill: "Phân tích nội dung", description: "Đọc một bài báo khoảng 700 từ.\nYêu cầu:\nXác định chủ đề.\nChia bài thành các ý chính.\nTìm luận điểm và luận cứ.\nĐánh giá xem các luận cứ có đủ thuyết phục không." },
+                    { id: "L4-E9", level: 4, number: 9, title: "Phân tích quyết định", skill: "Hỗ trợ quyết định", description: "Tình huống: Gia đình muốn mua máy giặt mới.\nYêu cầu:\nLiệt kê các tiêu chí cần xem xét.\nPhân tích ưu và nhược điểm của từng lựa chọn.\nXác định các rủi ro có thể xảy ra.\nĐưa ra quyết định cuối cùng kèm lý do." },
+                    { id: "L4-E10", level: 4, number: 10, title: "Phân tích toàn diện một vấn đề", skill: "Phân tích tổng hợp", description: "Chọn một chủ đề, ví dụ: Ô nhiễm môi trường, Nghiện điện thoại, Tắc đường, Bạo lực học đường, Lãng phí thực phẩm.\nYêu cầu:\n1. Mô tả vấn đề.\n2. Phân tích các thành phần liên quan.\n3. Xác định các bên liên quan.\n4. Phân tích nguyên nhân.\n5. Phân tích hậu quả.\n6. Phân tích các giải pháp hiện có.\n7. Đề xuất giải pháp mới và giải thích vì sao hiệu quả." },
+
+                    // LEVEL 5
+                    { id: "L5-E1", level: 5, number: 1, title: "Tìm nhiều nguyên nhân cho một kết quả", skill: "Một quả - nhiều nhân", description: "Hiện tượng: Cây bị héo.\nYêu cầu:\nLiệt kê ít nhất 15 nguyên nhân có thể.\nChia thành:\nNguyên nhân tự nhiên, Nguyên nhân do con người, Nguyên nhân do sinh vật.\nXác định 3 nguyên nhân có khả năng xảy ra nhất." },
+                    { id: "L5-E2", level: 5, number: 2, title: "Tìm nhiều hậu quả từ một nguyên nhân", skill: "Một nhân - nhiều quả", description: "Nguyên nhân: Mất điện trong 24 giờ.\nYêu cầu:\nLiệt kê ít nhất 20 hậu quả.\nChia thành:\nHậu quả đối với gia đình, doanh nghiệp, bệnh viện, giao thông." },
+                    { id: "L5-E3", level: 5, number: 3, title: "Xây dựng chuỗi nhân quả", skill: "Chuỗi nhân quả", description: "Chủ đề: Học chăm.\nYêu cầu:\nViết một chuỗi gồm ít nhất 10 mắt xích.\nVí dụ:\nHọc chăm → Hiểu bài → ...\nChỉ ra mắt xích nào quan trọng nhất và giải thích." },
+                    { id: "L5-E4", level: 5, number: 4, title: "Phân biệt nguyên nhân trực tiếp và gián tiếp", skill: "Phân tích cấp độ nhân", description: "Tình huống: Một cửa hàng bị giảm doanh thu.\nYêu cầu:\nLiệt kê các nguyên nhân.\nPhân loại thành:\nTrực tiếp, Gián tiếp.\nGiải thích vì sao xếp như vậy." },
+                    { id: "L5-E5", level: 5, number: 5, title: "Xác định nguyên nhân gốc", skill: "Root Cause Analysis", description: "Tình huống: Học sinh thường xuyên quên làm bài tập.\nYêu cầu:\nVẽ sơ đồ \"xương cá\" hoặc bảng phân tích.\nChia nguyên nhân theo các nhóm:\nCon người, Phương pháp, Môi trường, Thời gian, Công cụ.\nChọn nguyên nhân gốc cần ưu tiên giải quyết." },
+                    { id: "L5-E6", level: 5, number: 6, title: "Phân biệt tương quan và nhân quả", skill: "Nhân quả vs Tương quan", description: "Cho các cặp hiện tượng:\nTrời nóng → Bán nhiều kem.\nMang ô → Trời mưa.\nHọc nhiều → Điểm cao.\nGà gáy → Mặt trời mọc.\nUống cà phê → Thức khuya.\nYêu cầu:\nĐánh dấu: Có quan hệ nhân quả, Chỉ là tương quan, Chưa đủ dữ liệu để kết luận.\nGiải thích cho từng trường hợp." },
+                    { id: "L5-E7", level: 5, number: 7, title: "Phân tích vòng lặp nhân quả", skill: "Vòng lặp phản hồi", description: "Chủ đề: Ô nhiễm không khí.\nYêu cầu:\nXây dựng ít nhất một vòng lặp tích cực (khuếch đại).\nXây dựng ít nhất một vòng lặp cân bằng (giảm tác động).\nGiải thích cơ chế hoạt động của từng vòng lặp." },
+                    { id: "L5-E8", level: 5, number: 8, title: "Phân tích tác động dây chuyền", skill: "Hiệu ứng domino", description: "Sự kiện: Giá xăng tăng mạnh.\nYêu cầu:\nVẽ sơ đồ các tác động lan truyền.\nPhân tích ảnh hưởng đến:\nVận tải, Thực phẩm, Người tiêu dùng, Doanh nghiệp, Nhà nước." },
+                    { id: "L5-E9", level: 5, number: 9, title: "Phân tích đa chiều", skill: "Nhân quả đa chiều", description: "Chủ đề: Học sinh sử dụng AI trong học tập.\nYêu cầu:\nPhân tích:\nNguyên nhân khiến AI được sử dụng.\nLợi ích, Rủi ro.\nHậu quả ngắn hạn, Hậu quả dài hạn.\nĐề xuất cách giảm rủi ro." },
+                    { id: "L5-E10", level: 5, number: 10, title: "Mô phỏng kịch bản nhân quả", skill: "Mô phỏng & Dự báo", description: "Tình huống: Một thành phố quyết định cấm xe máy trong trung tâm.\nYêu cầu:\n1. Dự đoán các tác động sau: 1 tuần, 1 tháng, 1 năm, 5 năm.\n2. Phân loại thành: Tác động tích cực, tiêu cực, ngoài dự kiến.\n3. Đề xuất các biện pháp để giảm tác động tiêu cực." },
+
+                    // LEVEL 6
+                    { id: "L6-E1", level: 6, number: 1, title: "Suy luận diễn dịch", skill: "Deductive Reasoning", description: "Cho các dữ kiện:\n1. Tất cả chim đều có cánh.\n2. Chim cánh cụt là chim.\nYêu cầu:\nRút ra kết luận.\nKết luận đó có chắc chắn đúng không? Giải thích vì sao.\nThực hiện tiếp với 5 bộ dữ kiện khác do em tự tạo." },
+                    { id: "L6-E2", level: 6, number: 2, title: "Suy luận quy nạp", skill: "Inductive Reasoning", description: "Quan sát dãy số:\n3, 6, 9, 12, 15\n5, 10, 15, 20\n2, 4, 8, 16\nYêu cầu:\nTìm quy luật. Viết tiếp 5 số tiếp theo.\nTự tạo thêm một dãy số có quy luật tương tự." },
+                    { id: "L6-E3", level: 6, number: 3, title: "Suy luận tương tự", skill: "Analogical Reasoning", description: "Hoàn thành các phép so sánh:\nBánh xe : Xe :: Cánh : ?\nGiáo viên : Dạy :: Bác sĩ : ?\nGốc cây : Cây :: Móng : ?\nSau đó tự tạo thêm 10 cặp tương tự." },
+                    { id: "L6-E4", level: 6, number: 4, title: "Suy luận loại trừ", skill: "Loại trừ khả năng", description: "Có 4 hộp: A, B, C, D. Chỉ có một hộp chứa chìa khóa.\nBiết rằng:\nNếu chìa khóa ở A thì không ở C.\nChìa khóa không ở B.\nNếu ở D thì A sai.\nC đúng.\nHãy xác định chìa khóa ở đâu và giải thích từng bước." },
+                    { id: "L6-E5", level: 6, number: 5, title: "Suy luận từ dấu hiệu", skill: "Evidence-based", description: "Quan sát các hiện tượng:\nĐường ướt, Người đi ô, Trời nhiều mây, Gió mạnh.\nYêu cầu:\nĐưa ra ít nhất 5 giả thuyết giải thích.\nXếp theo mức độ có khả năng xảy ra.\nNêu dữ kiện cần bổ sung để kiểm chứng." },
+                    { id: "L6-E6", level: 6, number: 6, title: "Suy luận xác suất", skill: "Probabilistic Reasoning", description: "Một túi có:\n5 viên bi đỏ, 3 viên bi xanh, 2 viên bi vàng.\nYêu cầu:\nKhông tính toán bằng công thức.\nDự đoán màu nào dễ lấy nhất.\nNếu thêm 10 viên bi vàng thì điều gì thay đổi? Giải thích bằng lập luận." },
+                    { id: "L6-E7", level: 6, number: 7, title: "Suy luận phản biện", skill: "Critical Reasoning", description: "Có người nói: \"Tất cả học sinh giỏi đều học thêm.\"\nYêu cầu:\nTìm ít nhất 5 ví dụ phản bác.\nChỉ ra điểm chưa hợp lý của lập luận.\nViết lại câu trên sao cho chính xác hơn." },
+                    { id: "L6-E8", level: 6, number: 8, title: "Suy luận phản thực tế", skill: "Counterfactual", description: "Tình huống: \"Một học sinh trượt kỳ thi.\"\nYêu cầu:\nNếu học sinh ôn tập sớm hơn thì điều gì có thể xảy ra?\nNếu đề thi dễ hơn? Nếu ngủ đủ giấc? Nếu không bị ốm?\nSo sánh các kịch bản và đánh giá tác động của từng yếu tố." },
+                    { id: "L6-E9", level: 6, number: 9, title: "Suy luận dự báo", skill: "Dự báo xu hướng", description: "Quan sát dữ liệu năm 2022-2025.\nYêu cầu:\nDự đoán số học sinh năm 2026.\nĐưa ra ít nhất 3 kịch bản: Lạc quan, Trung bình, Bi quan.\nGiải thích cơ sở của từng dự đoán." },
+                    { id: "L6-E10", level: 6, number: 10, title: "Suy luận tổng hợp", skill: "Integrated Reasoning", description: "Một cửa hàng có các dấu hiệu:\nDoanh thu giảm. Khách hàng cũ ít quay lại. Nhiều đánh giá 2 sao. Nhân viên nghỉ việc liên tục. Đối thủ mở cửa hàng mới gần đó.\nYêu cầu:\n1. Liệt kê tất cả các giả thuyết có thể.\n2. Xác định giả thuyết có khả năng cao nhất.\n3. Đề xuất dữ liệu cần thu thập để kiểm chứng.\n4. Đưa ra kết luận tạm thời và hướng hành động." },
+
+                    // LEVEL 7
+                    { id: "L7-E1", level: 7, number: 1, title: "Giả thuyết giải thích hiện tượng", skill: "Giải thích hiện tượng", description: "Hiện tượng: Sáng nay sân trường có rất nhiều lá cây rụng.\nYêu cầu:\nĐưa ra ít nhất 10 giả thuyết giải thích.\nXếp theo mức độ có khả năng xảy ra.\nChọn 3 giả thuyết hợp lý nhất." },
+                    { id: "L7-E2", level: 7, number: 2, title: "Giả thuyết nguyên nhân", skill: "Giả thuyết nguyên nhân", description: "Tình huống: Một học sinh từ học khá bỗng điểm giảm mạnh.\nYêu cầu:\nĐưa ra ít nhất 15 nguyên nhân có thể.\nPhân loại: Cá nhân, Gia đình, Nhà trường, Sức khỏe, Bạn bè.\nĐánh giá nguyên nhân nào cần kiểm tra trước." },
+                    { id: "L7-E3", level: 7, number: 3, title: "Giả thuyết kết quả", skill: "Giả thuyết hậu quả", description: "Tình huống: Trường quyết định cấm sử dụng điện thoại trong giờ học.\nYêu cầu:\nDự đoán ít nhất 15 kết quả có thể xảy ra.\nChia thành: Tích cực, Tiêu cực, Ngoài dự kiến." },
+                    { id: "L7-E4", level: 7, number: 4, title: "Giả thuyết \"Nếu... thì...\"", skill: "Giả thuyết điều kiện", description: "Chọn một tình huống:\nNếu Trái Đất quay chậm hơn / Nếu một ngày có 30 giờ / Nếu con người không cần ngủ.\nYêu cầu:\nViết ít nhất 20 dự đoán.\nChỉ ra dự đoán nào hợp lý nhất và vì sao." },
+                    { id: "L7-E5", level: 7, number: 5, title: "Giả thuyết phản biện", skill: "Tạo phản giả thuyết", description: "Có người nói: \"Học online luôn hiệu quả hơn học trực tiếp.\"\nYêu cầu:\nĐưa ra ít nhất 10 giả thuyết cho thấy câu nói này không phải lúc nào cũng đúng.\nNêu điều kiện để từng giả thuyết xảy ra." },
+                    { id: "L7-E6", level: 7, number: 6, title: "Thiết kế cách kiểm chứng giả thuyết", skill: "Kiểm chứng khoa học", description: "Giả thuyết: \"Nghe nhạc giúp học sinh học bài nhanh hơn.\"\nYêu cầu:\nXác định: Biến độc lập, Biến phụ thuộc, Các yếu tố cần giữ nguyên.\nThiết kế một thí nghiệm đơn giản để kiểm tra." },
+                    { id: "L7-E7", level: 7, number: 7, title: "Giả thuyết tối ưu hóa", skill: "Tối ưu cải tiến", description: "Tình huống: Một cửa hàng muốn tăng doanh thu.\nYêu cầu:\nĐưa ra ít nhất 10 giả thuyết giúp tăng doanh thu.\nVới mỗi giả thuyết, đánh giá: Chi phí, Độ khó, Hiệu quả dự kiến.\nChọn 3 giả thuyết tốt nhất." },
+                    { id: "L7-E8", level: 7, number: 8, title: "Giả thuyết đa kịch bản", skill: "Giả thuyết kịch bản", description: "Tình huống: Một công ty chuẩn bị tung sản phẩm mới.\nYêu cầu:\nXây dựng 4 kịch bản:\nThành công vượt mong đợi, Thành công vừa phải, Thất bại nhẹ, Thất bại nghiêm trọng.\nVới mỗi kịch bản, nêu nguyên nhân có thể dẫn đến kết quả đó." },
+                    { id: "L7-E9", level: 7, number: 9, title: "Giả thuyết kết hợp nhiều yếu tố", skill: "Đa nguyên kết hợp", description: "Hiện tượng: Thành phố bị ngập sau cơn mưa lớn.\nYêu cầu:\nĐưa ra các giả thuyết có sự kết hợp của nhiều nguyên nhân, ví dụ: Mưa lớn + cống tắc, Triều cường + mưa, Đô thị hóa + thoát nước kém.\nĐánh giá giả thuyết nào hợp lý nhất." },
+                    { id: "L7-E10", level: 7, number: 10, title: "Xây dựng và đánh giá hệ thống giả thuyết", skill: "Hệ thống giả thuyết", description: "Chủ đề: Vì sao học sinh lớp 6 học tiếng Anh chưa hiệu quả?\nYêu cầu:\n1. Đưa ra ít nhất 20 giả thuyết.\n2. Gom thành các nhóm.\n3. Đánh giá từng giả thuyết theo: Mức độ hợp lý, Khả năng kiểm chứng, Mức độ ảnh hưởng.\n4. Chọn 5 giả thuyết ưu tiên để nghiên cứu tiếp.\n5. Đề xuất dữ liệu cần thu thập để xác minh." },
+
+                    // LEVEL 8
+                    { id: "L8-E1", level: 8, number: 1, title: "Đánh giá theo tiêu chí", skill: "Bảng tiêu chí", description: "Đối tượng: Ba chiếc ba lô học sinh.\nYêu cầu:\nXây dựng ít nhất 6 tiêu chí: Giá, Độ bền, Khối lượng, Sức chứa, Thiết kế, Sự thoải mái.\nChấm điểm từng tiêu chí (1–10). Tính điểm tổng. Chọn cái phù hợp nhất." },
+                    { id: "L8-E2", level: 8, number: 2, title: "Đánh giá ưu - nhược điểm", skill: "Phân tích hai mặt", description: "Chủ đề: Học trực tiếp và học trực tuyến.\nYêu cầu:\nLiệt kê: 15 ưu điểm, 15 nhược điểm.\nĐánh giá trong từng hoàn cảnh: Tiểu học, THCS, Đại học, Người đi làm." },
+                    { id: "L8-E3", level: 8, number: 3, title: "Đánh giá mức độ quan trọng", skill: "Đánh giá ưu tiên", description: "Chủ đề: Những yếu tố giúp học tốt (Chăm chỉ, Giáo viên, Gia đình, Bạn bè...).\nYêu cầu:\nXếp hạng từ quan trọng nhất đến ít quan trọng nhất. Giải thích lý do.\nNếu thay đổi hoàn cảnh thì thứ hạng có thay đổi không?" },
+                    { id: "L8-E4", level: 8, number: 4, title: "Đánh giá độ tin cậy", skill: "Độ tin nguồn tin", description: "Cho 5 nguồn thông tin: Báo chính thống, Wikipedia, Facebook, YouTube, Người quen kể.\nYêu cầu:\nChấm điểm độ tin cậy. Giải thích tiêu chí đánh giá.\nNêu trường hợp mỗi nguồn có thể đáng tin hoặc không đáng tin." },
+                    { id: "L8-E5", level: 8, number: 5, title: "Đánh giá rủi ro", skill: "Đánh giá rủi ro", description: "Tình huống: Mở một quán trà sữa.\nYêu cầu:\nLiệt kê ít nhất 15 rủi ro.\nChấm: Khả năng xảy ra, Mức độ ảnh hưởng.\nXếp thành: Rủi ro cao, Trung bình, Thấp. Đề xuất biện pháp giảm rủi ro." },
+                    { id: "L8-E6", level: 8, number: 6, title: "Đánh giá phương án", skill: "Lựa chọn phương án", description: "Tình huống: Đi du lịch.\nBa lựa chọn: Máy bay, Tàu hỏa, Xe khách.\nĐánh giá theo: Chi phí, Thời gian, An toàn, Thoải mái, Tác động môi trường.\nCuối cùng chọn phương án phù hợp với: Gia đình trẻ nhỏ, Sinh viên, Người cao tuổi." },
+                    { id: "L8-E7", level: 8, number: 7, title: "Đánh giá lập luận", skill: "Thẩm định lập luận", description: "Đọc đoạn ý kiến: \"Mọi học sinh nên dùng AI để làm hết bài tập vì sẽ tiết kiệm thời gian.\"\nYêu cầu:\nChỉ ra các luận điểm, điểm mạnh, điểm yếu.\nTìm các giả định chưa được chứng minh. Viết kết luận của em." },
+                    { id: "L8-E8", level: 8, number: 8, title: "Đánh giá hiệu quả", skill: "Đánh giá hiệu quả", description: "Tình huống: Trường tổ chức chương trình \"Không dùng điện thoại trong giờ học\" sau 6 tháng.\nYêu cầu:\nXây dựng các chỉ số đánh giá: Kết quả học tập, Mức độ tập trung, Vi phạm nội quy, Ý kiến học sinh.\nĐề xuất cách thu thập dữ liệu và kết luận." },
+                    { id: "L8-E9", level: 8, number: 9, title: "Đánh giá đạo đức", skill: "Đa góc nhìn đạo đức", description: "Tình huống: Một học sinh nhìn thấy bạn quay cóp trong kỳ thi.\nYêu cầu:\nĐánh giá hành động theo góc nhìn: Cá nhân, Bạn bè, Giáo viên, Nhà trường, Xã hội.\nĐề xuất cách xử lý phù hợp nhất và giải thích." },
+                    { id: "L8-E10", level: 8, number: 10, title: "Đánh giá tổng hợp và ra quyết định", skill: "Ra quyết định", description: "Tình huống: Em có 30 triệu đồng để đầu tư cho việc học.\nLựa chọn: Mua máy tính, Học tiếng Anh, Học lập trình, Học kỹ năng mềm, Mua sách, Đầu tư học AI.\nYêu cầu:\n1. Xây dựng tiêu chí đánh giá & gán trọng số.\n2. Chấm điểm & xếp hạng.\n3. Viết báo cáo khoảng 300 từ giải thích quyết định." },
+
+                    // LEVEL 9
+                    { id: "L9-E1", level: 9, number: 1, title: "Sáng tạo ý tưởng", skill: "Divergent Thinking", description: "Chủ đề: Chiếc ghế.\nYêu cầu:\nNghĩ ra ít nhất 30 cách sử dụng chiếc ghế ngoài mục đích để ngồi.\nChia các ý tưởng thành: Thực tế, Vui nhộn, Khẩn cấp, Sáng tạo." },
+                    { id: "L9-E2", level: 9, number: 2, title: "Cải tiến sản phẩm", skill: "Innovation", description: "Đối tượng: Cặp sách học sinh.\nYêu cầu:\nTìm ít nhất 10 điểm còn bất tiện. Đề xuất các cải tiến.\nVẽ sơ đồ hoặc mô tả sản phẩm mới. Giải thích lợi ích." },
+                    { id: "L9-E3", level: 9, number: 3, title: "Kết hợp hai ý tưởng", skill: "Combination", description: "Chọn hai đối tượng bất kỳ, ví dụ: Đồng hồ + Loa, Xe đạp + Máy phát điện, Bút + USB.\nYêu cầu:\nThiết kế sản phẩm kết hợp. Mô tả chức năng, đối tượng sử dụng, ưu và nhược điểm." },
+                    { id: "L9-E4", level: 9, number: 4, title: "Thiết kế quy trình mới", skill: "Thiết kế quy trình", description: "Chủ đề: Học từ vựng tiếng Anh.\nYêu cầu:\nThiết kế một quy trình học gồm 6–10 bước. Giải thích mục đích của từng bước.\nSo sánh với cách học truyền thống." },
+                    { id: "L9-E5", level: 9, number: 5, title: "Thiết kế trò chơi", skill: "Thiết kế Game", description: "Yêu cầu: Sáng tạo một trò chơi giúp học sinh lớp 6 học Toán hoặc Tiếng Anh.\nQuy định: Mục tiêu, Luật chơi, Cách tính điểm, Điều kiện thắng.\nThử nghiệm với 3 người và ghi nhận phản hồi." },
+                    { id: "L9-E6", level: 9, number: 6, title: "Thiết kế mô hình", skill: "Thiết kế hệ thống", description: "Chủ đề: Thành phố xanh.\nYêu cầu:\nThiết kế mô hình thành phố (Giao thông, Trường học, Công viên, Năng lượng, Rác thải).\nGiải thích cách các thành phần hoạt động cùng nhau." },
+                    { id: "L9-E7", level: 9, number: 7, title: "Sáng tạo giải pháp", skill: "Sáng tạo giải pháp", description: "Vấn đề: Giảm rác thải nhựa trong trường học.\nYêu cầu:\nĐưa ra ít nhất 10 giải pháp. Chọn 3 giải pháp khả thi nhất.\nKết hợp chúng thành một kế hoạch hoàn chỉnh." },
+                    { id: "L9-E8", level: 9, number: 8, title: "Sáng tạo theo ràng buộc", skill: "Sáng tạo ràng buộc", description: "Thử thách: Thiết kế một bàn học chi phí dưới 1 triệu, gấp gọn, vật liệu tái chế, lắp ráp trong 15 phút.\nYêu cầu:\nMô tả thiết kế và giải thích cách đáp ứng từng yêu cầu." },
+                    { id: "L9-E9", level: 9, number: 9, title: "Sáng tạo từ góc nhìn mới", skill: "Sáng tạo người dùng", description: "Chọn một đồ vật quen thuộc: Cái ô, Quyển sách, Điện thoại, Chai nước.\nYêu cầu:\nThiết kế lại sản phẩm dành cho: Trẻ em, Người già, Người khuyết tật, Nhà du hành vũ trụ.\nGiải thích sự khác biệt." },
+                    { id: "L9-E10", level: 9, number: 10, title: "Thiết kế dự án hoàn chỉnh", skill: "Thiết kế dự án", description: "Chủ đề: Xây dựng một câu lạc bộ học tập trong trường.\nYêu cầu:\n1. Tên, mục tiêu, cơ cấu tổ chức.\n2. Kế hoạch 6 tháng, dự trù kinh phí, cách tuyển thành viên.\n3. Tiêu chí đánh giá, dự đoán khó khăn và giải quyết." },
+
+                    // LEVEL 10
+                    { id: "L10-E1", level: 10, number: 1, title: "Giải quyết vấn đề cá nhân", skill: "Giải quyết cá nhân", description: "Tình huống: Em thường xuyên đi học muộn.\nYêu cầu:\n1. Xác định vấn đề. 2. Thu thập dữ liệu trong 7 ngày. 3. Phân tích nguyên nhân & gốc rễ.\n4. Đề xuất 10 giải pháp & đánh giá. 5. Thực hiện thử nghiệm 1 tuần & điều chỉnh." },
+                    { id: "L10-E2", level: 10, number: 2, title: "Giải quyết vấn đề gia đình", skill: "Giải quyết qua dữ liệu", description: "Tình huống: Gia đình muốn giảm 20% tiền điện mỗi tháng.\nYêu cầu:\nThu thập hóa đơn điện. Phân tích thiết bị tiêu thụ nhiều. Đề xuất biện pháp & lập kế hoạch. Theo dõi 1 tháng." },
+                    { id: "L10-E3", level: 10, number: 3, title: "Giải quyết vấn đề học tập", skill: "Lập kế hoạch cải tiến", description: "Tình huống: Điểm môn Toán của em giảm liên tục.\nYêu cầu:\nPhân tích kết quả, tìm nguyên nhân, lập mục tiêu, thiết kế kế hoạch mới & cách theo dõi tiến độ tuần." },
+                    { id: "L10-E4", level: 10, number: 4, title: "Giải quyết xung đột", skill: "Giải quyết xung đột", description: "Tình huống: Hai bạn trong lớp xảy ra mâu thuẫn.\nYêu cầu:\nXác định bên liên quan, thu thập thông tin, phân tích nguyên nhân, đề xuất phương án hòa giải, đánh giá ưu nhược điểm." },
+                    { id: "L10-E5", level: 10, number: 5, title: "Giải quyết vấn đề kinh doanh", skill: "Giải quyết kinh doanh", description: "Tình huống: Một cửa hàng bán ít khách hơn trước.\nYêu cầu:\nThu thập dữ liệu doanh thu, phân tích khách hàng, đối thủ, sản phẩm. Đề xuất giải pháp, lập kế hoạch triển khai." },
+                    { id: "L10-E6", level: 10, number: 6, title: "Giải quyết vấn đề cộng đồng", skill: "Giải quyết cộng đồng", description: "Tình huống: Khu phố có nhiều rác thải.\nYêu cầu:\nQuan sát hiện trạng, nguyên nhân. Thiết kế chiến dịch truyền thông giảm rác & tiêu chí đánh giá thành công." },
+                    { id: "L10-E7", level: 10, number: 7, title: "Giải quyết tình huống khẩn cấp", skill: "Giải quyết khủng hoảng", description: "Tình huống: Một trận lũ lớn xảy ra tại địa phương.\nYêu cầu:\nXác định vấn đề ưu tiên, sắp xếp thứ tự xử lý, phân công nguồn lực, lập kế hoạch ứng phó 24h, 7 ngày, 1 tháng." },
+                    { id: "L10-E8", level: 10, number: 8, title: "Thiết kế giải pháp tối ưu", skill: "Thiết kế giải pháp", description: "Tình huống: Trường muốn giảm lượng rác nhựa xuống còn một nửa.\nYêu cầu:\nThu thập dữ liệu, đặt mục tiêu, đề xuất giải pháp. Chấm điểm theo chi phí, hiệu quả, khả thi, bền vững." },
+                    { id: "L10-E9", level: 10, number: 9, title: "Giải quyết vấn đề mở", skill: "Giải quyết vấn đề mở", description: "Đề bài: \"Làm thế nào để học sinh lớp 6 yêu thích việc đọc sách hơn?\"\nYêu cầu:\nĐặt câu hỏi, phỏng vấn, phân tích nguyên nhân. Đưa ra ý tưởng, thiết kế chương trình & đo lường hiệu quả." },
+                    { id: "L10-E10", level: 10, number: 10, title: "Dự án giải quyết vấn đề tổng hợp", skill: "Chu trình hoàn chỉnh", description: "Chọn một vấn đề (Bạo lực học đường, nghiện điện thoại, lãng phí thực phẩm...).\nYêu cầu thực hiện đầy đủ 10 giai đoạn tương ứng với 10 cấp độ tư duy từ Quan sát đến Đánh giá và Thực tế cải tiến." }
+                ],
+                selectedLevel: 1,
+                selectedExerciseId: "L1-E1",
+                answers: {},
+                activeWorkspaceTab: 'write',
+                isLoadingFeedback: false,
+
+                initApp() {
+                    // Check system preference dark mode
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        this.darkMode = true;
+                        document.documentElement.classList.add('dark');
+                    }
+                    
+                    // Initialize empty answer states for all 100 exercises
+                    this.exercises.forEach(ex => {
+                        this.answers[ex.id] = {
+                            text: '',
+                            status: 'not_started', // 'not_started' | 'draft' | 'completed'
+                            feedback: ''
+                        };
+                    });
+
+                    // Load saved session if exists in memory
+                    const saved = sessionStorage.getItem('mindgym_session');
+                    if (saved) {
+                        try {
+                            const parsed = JSON.parse(saved);
+                            Object.keys(parsed).forEach(key => {
+                                if (this.answers[key]) {
+                                    this.answers[key] = parsed[key];
+                                }
+                            });
+                        } catch (e) {
+                            console.error("Error restoring session", e);
+                        }
+                    }
+
+                    // Refresh Lucide icons after rendering
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                    });
+                },
+
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                selectLevel(levelNum) {
+                    this.selectedLevel = levelNum;
+                    // Auto select the first exercise of the level
+                    const levelExercises = this.exercises.filter(ex => ex.level === levelNum);
+                    if (levelExercises.length > 0) {
+                        this.selectedExerciseId = levelExercises[0].id;
+                    }
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+
+                selectExercise(exId) {
+                    this.selectedExerciseId = exId;
+                    this.activeWorkspaceTab = 'write';
+                    this.$nextTick(() => { lucide.createIcons(); });
+                },
+
+                filteredExercises() {
+                    return this.exercises.filter(ex => ex.level === this.selectedLevel);
+                },
+
+                get activeExercise() {
+                    return this.exercises.find(ex => ex.id === this.selectedExerciseId);
+                },
+
+                saveToSession() {
+                    const currentAnswer = this.answers[this.selectedExerciseId];
+                    if (currentAnswer && currentAnswer.text.trim() !== '') {
+                        if (currentAnswer.status === 'not_started') {
+                            currentAnswer.status = 'draft';
+                        }
+                    } else if (currentAnswer && currentAnswer.text.trim() === '') {
+                        currentAnswer.status = 'not_started';
+                    }
+                    sessionStorage.setItem('mindgym_session', JSON.stringify(this.answers));
+                },
+
+                markAsComplete(exId) {
+                    if (!this.answers[exId].text || this.answers[exId].text.trim() === '') {
+                        alert("Vui lòng ghi chép lại nội dung bài tập trước khi đánh dấu Hoàn thành!");
+                        return;
+                    }
+                    this.answers[exId].status = 'completed';
+                    this.saveToSession();
+                },
+
+                getExerciseStatusClass(exId) {
+                    const ans = this.answers[exId];
+                    if (!ans || ans.status === 'not_started') return 'bg-slate-300 dark:bg-slate-700';
+                    if (ans.status === 'draft') return 'bg-amber-400 animate-pulse';
+                    if (ans.status === 'completed') return 'bg-emerald-500 shadow-sm shadow-emerald-500/50';
+                    return 'bg-slate-300';
+                },
+
+                getExerciseStatusLabel(exId) {
+                    const ans = this.answers[exId];
+                    if (!ans || ans.status === 'not_started') return 'Chưa bắt đầu';
+                    if (ans.status === 'draft') return 'Đang nháp';
+                    if (ans.status === 'completed') return 'Hoàn thành';
+                    return 'Chưa làm';
+                },
+
+                getExerciseStatusLabelClass(exId) {
+                    const ans = this.answers[exId];
+                    if (!ans || ans.status === 'not_started') return 'bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-400';
+                    if (ans.status === 'draft') return 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300';
+                    if (ans.status === 'completed') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
+                    return 'bg-slate-100 text-slate-500';
+                },
+
+                countCompletedInLevel(levelNum) {
+                    return this.exercises.filter(ex => ex.level === levelNum && this.answers[ex.id]?.status === 'completed').length;
+                },
+
+                calculateLevelProgress(levelNum) {
+                    const completed = this.countCompletedInLevel(levelNum);
+                    return Math.round((completed / 10) * 100);
+                },
+
+                countCompletedExercises() {
+                    return Object.values(this.answers).filter(ans => ans.status === 'completed').length;
+                },
+
+                calculateGlobalProgress() {
+                    const completed = this.countCompletedExercises();
+                    return Math.round((completed / 100) * 100);
+                },
+
+                renderMarkdown(text) {
+                    if (!text) return "";
+                    return marked.parse(text);
+                },
+
+                async getAICoachReview() {
+                    const ex = this.activeExercise;
+                    const ans = this.answers[ex.id];
+
+                    if (!ans.text || ans.text.trim().length < 10) {
+                        // Using browser element warning instead of alert
+                        ans.feedback = "### ⚠️ Bài làm quá ngắn!\nVui lòng nhập nội dung lập luận tư duy của bạn dài hơn một chút (tối thiểu 10 ký tự) để Trợ lý AI Coach có đủ dữ liệu phân tích sâu sắc.";
+                        this.activeWorkspaceTab = 'ai';
+                        return;
+                    }
+
+                    this.isLoadingFeedback = true;
+                    this.activeWorkspaceTab = 'ai';
+
+                    const systemPrompt = `Bạn là một Huấn luyện viên Tư duy (Thinking Coach) xuất sắc, thân thiện và giàu kinh nghiệm.
+Hãy đánh giá bài làm của học sinh cho bài tập tư duy sau đây.
+Yêu cầu bài tập: "${ex.description}"
+Kỹ năng cần rèn luyện: "${ex.skill}"
+Hãy chỉ ra điểm tốt (ví dụ: góc nhìn sáng tạo, cấu trúc rõ ràng), điểm cần đào sâu thêm (ví dụ: các lỗ hổng lập luận, các giả định chưa được chứng minh) và đưa ra gợi ý/câu hỏi gợi mở thực tế để rèn luyện tư duy tốt hơn.
+Hãy viết phản hồi bằng tiếng Việt, định dạng Markdown rõ ràng, ngắn gọn, truyền cảm hứng. Gợi ý thêm các điểm liên hệ thực tiễn.`;
+
+                    const userQuery = `Bài làm của tôi:\n"""\n${ans.text}\n"""`;
+                    
+                    const apiKey = ""; // Leave empty to utilize runtime auto-filling key
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                    };
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const result = await response.json();
+                        const candidate = result.candidates?.[0];
+
+                        if (candidate && candidate.content?.parts?.[0]?.text) {
+                            ans.feedback = candidate.content.parts[0].text;
+                            ans.status = 'completed'; // Auto mark as completed upon getting review
+                            this.saveToSession();
+                        } else {
+                            ans.feedback = "### ❌ Phản hồi không xác định\nĐã xảy ra lỗi khi đọc kết quả phân tích. Vui lòng thử lại sau.";
+                        }
+                    } catch (error) {
+                        console.error("Gemini API Error", error);
+                        ans.feedback = "### ❌ Lỗi kết nối AI Coach\nKhông thể kết nối đến máy chủ AI để lấy nhận xét của bạn. Vui lòng kiểm tra lại đường truyền mạng.";
+                    } finally {
+                        this.isLoadingFeedback = false;
+                        this.$nextTick(() => { lucide.createIcons(); });
+                    }
+                },
+
+                exportPortfolio() {
+                    let textContent = "=========================================================\n";
+                    textContent += "      HỌC BẠ TƯ DUY TOÀN DIỆN - MINDGYM 10 CẤP ĐỘ\n";
+                    textContent += "=========================================================\n\n";
+                    textContent += `Tổng số bài rèn luyện đã hoàn thành: ${this.countCompletedExercises()}/100 bài\n`;
+                    textContent += `Tiến độ học tập chung: ${this.calculateGlobalProgress()}%\n\n`;
+                    textContent += "---------------------------------------------------------\n\n";
+
+                    let hasContent = false;
+                    this.exercises.forEach(ex => {
+                        const ans = this.answers[ex.id];
+                        if (ans && ans.text.trim() !== "") {
+                            hasContent = true;
+                            textContent += `[CẤP ĐỘ ${ex.level}] BÀI ${ex.number}: ${ex.title}\n`;
+                            textContent += `Kỹ năng: ${ex.skill}\n`;
+                            textContent += `Trạng thái: ${this.getExerciseStatusLabel(ex.id)}\n`;
+                            textContent += "---------------------------------------------------------\n";
+                            textContent += `Yêu cầu: \n${ex.description}\n\n`;
+                            textContent += `Bài viết của bạn: \n${ans.text}\n\n`;
+                            if (ans.feedback) {
+                                textContent += `Nhận xét từ AI Coach: \n${ans.feedback}\n`;
+                            }
+                            textContent += "\n=========================================================\n\n";
+                        }
+                    });
+
+                    if (!hasContent) {
+                        alert("Bạn chưa viết bài rèn luyện nào! Hãy làm tối thiểu một bài tập để tải về.");
+                        return;
+                    }
+
+                    // File download generator
+                    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "Hoc_Ba_Tu_Duy_MindGym.txt";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
