@@ -1,1589 +1,1266 @@
 <!DOCTYPE html>
 <html lang="vi" class="h-full bg-slate-950 text-slate-100">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MindGym - Luyện Tư Duy 10 Cấp Độ</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter & Montserrat -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        h1, h2, h3, .font-display {
-            font-family: 'Montserrat', sans-serif;
-        }
-        /* Custom scrollbar for mobile sleekness */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 999px;
-        }
-        /* Lock vertical bounce scroll on mobile if needed, keeping overflow clean */
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ứng Dụng Luyện Tập Tư Duy 4 Giai Đoạn</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS (XLSX Parser) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js CDN for Radar Chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #334155 #0f172a;
+    }
+
+    /* Live Tree View Line Structure */
+    .tree-line { position: relative; }
+    .tree-line::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #334155;
+    }
+    .tree-node::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 14px;
+      width: 10px;
+      height: 2px;
+      background-color: #334155;
+    }
+  </style>
 </head>
-<body class="h-full flex flex-col justify-between overflow-hidden">
+<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
 
-    <!-- Custom Modal Notification (No Window Alerts) -->
-    <div id="custom-alert" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform duration-300">
-            <div id="alert-icon-container" class="w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto bg-indigo-500/10 text-indigo-400 text-2xl">
-                ✦
-            </div>
-            <h3 id="alert-title" class="text-lg font-bold text-center text-white mb-2">Thông báo</h3>
-            <p id="alert-message" class="text-slate-400 text-sm text-center mb-6 leading-relaxed">Nội dung thông báo chi tiết ở đây.</p>
-            <button id="alert-close-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 text-sm shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                Đồng ý
-            </button>
-        </div>
+  <!-- TOP HEADER -->
+  <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-20 flex-shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-indigo-600 rounded-lg text-white font-bold text-lg flex items-center justify-center h-9 w-9">🧠</div>
+      <div>
+        <h1 class="font-bold text-sm md:text-base leading-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Hệ Thống Luyện Tư Duy 4 Giai Đoạn</h1>
+        <p class="text-[10px] text-slate-400 hidden sm:block">Chủ động - Sâu sắc - Chuẩn phương pháp</p>
+      </div>
     </div>
+    
+    <!-- Time-boxing Clock & API Status Badge & Settings Toggle -->
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <div id="timerDisplay" class="hidden items-center space-x-1 bg-amber-950/80 border border-amber-600/50 text-amber-300 px-2.5 py-1 rounded-full text-xs font-mono font-bold animate-pulse">
+        <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+        <span id="timerText">05:00</span>
+      </div>
+      <button onclick="switchMainTab('settings')" class="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+        <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-red-500"></span>
+        <span class="hidden sm:inline" id="apiStatusText">Chưa cấu hình API</span>
+        <i data-lucide="settings" class="w-3.5 h-3.5 ml-1 sm:hidden"></i>
+      </button>
+    </div>
+  </header>
 
-    <!-- API Key Settings Modal -->
-    <div id="api-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300">
-            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                <span class="text-indigo-400">⚙️</span> Cấu hình Trợ Lý AI
-            </h3>
-            <p class="text-slate-400 text-xs mb-4">
-                Sử dụng Google Gemini API để tự động chấm điểm và phản hồi bài làm tư duy của bạn. Nếu để trống, hệ thống sẽ sử dụng cơ chế phản hồi tự động ngoại tuyến.
+  <!-- MAIN NAVIGATION TABS BAR (4 TAB CHÍNH) -->
+  <nav class="h-11 bg-slate-900/90 border-b border-slate-800 flex items-center justify-around md:justify-start md:px-4 md:space-x-2 z-10 flex-shrink-0 overflow-x-auto custom-scrollbar">
+    <button onclick="switchMainTab('roadmap')" id="tab-btn-roadmap" class="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 transition whitespace-nowrap">
+      <i data-lucide="compass" class="w-4 h-4"></i>
+      <span>Cây Lộ Trình</span>
+    </button>
+    <button onclick="switchMainTab('workspace')" id="tab-btn-workspace" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+      <i data-lucide="edit-3" class="w-4 h-4"></i>
+      <span>Đề Bài & Phiếu Làm Bài</span>
+    </button>
+    <button onclick="switchMainTab('ai-eval')" id="tab-btn-ai-eval" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+      <i data-lucide="bot" class="w-4 h-4"></i>
+      <span>Trợ Lý Gemini AI Chấm Bài</span>
+    </button>
+    <button onclick="switchMainTab('knowledge')" id="tab-btn-knowledge" class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+      <i data-lucide="book-marked" class="w-4 h-4"></i>
+      <span>Thư Viện Bảo Bối</span>
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT CONTAINER (SWITCHABLE 4 TABS) -->
+  <div class="flex-1 bg-slate-950 flex flex-col overflow-hidden relative">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: CÂY LỘ TRÌNH                        -->
+    <!-- ========================================== -->
+    <section id="view-roadmap" class="tab-content flex-1 overflow-y-auto p-4 md:p-6">
+      <div class="max-w-5xl mx-auto space-y-6">
+        
+        <!-- Header & Import Action Bar -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
+          <div>
+            <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
+              <i data-lucide="compass"></i> Cây Lộ Trình Luyện Tập 4 Giai Đoạn
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Chọn bài tập từ cây lộ trình để tiến hành thực hành tư duy.</p>
+          </div>
+          <button onclick="switchMainTab('repository')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-md">
+            <i data-lucide="file-up" class="w-4 h-4"></i> Quản Lý / Import Excel
+          </button>
+        </div>
+
+        <!-- Roadmap Tree Container -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="mainRoadmapTree">
+          <!-- Rendered via JS -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- KHO BÀI (Hỗ trợ Import Excel trong Tab 1) -->
+    <section id="view-repository" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <div class="flex justify-between items-center">
+          <button onclick="switchMainTab('roadmap')" class="text-xs text-indigo-400 hover:underline flex items-center gap-1">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại Cây Lộ Trình
+          </button>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+          <h2 class="text-base font-bold text-indigo-400 mb-2 flex items-center gap-2">
+            <i data-lucide="file-spreadsheet"></i> Nhập Bài Tập Từ File Excel
+          </h2>
+          <p class="text-xs text-slate-400 mb-4">File Excel chuẩn 6 cột: <code class="bg-slate-800 text-cyan-300 px-1 py-0.5 rounded">Nhóm cấp độ | Cấp độ | Bài số | Tên bài tập | Nội dung / Đối tượng yêu cầu | Kỹ năng rèn luyện</code></p>
+
+          <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50" onclick="document.getElementById('excelFileInput').click()">
+            <i data-lucide="upload-cloud" class="w-10 h-10 text-indigo-400 mx-auto mb-2"></i>
+            <p class="text-sm text-slate-200 font-medium">Bấm để chọn hoặc kéo thả file Excel vào đây</p>
+            <p class="text-xs text-slate-500 mt-1">Hỗ trợ định dạng .xlsx, .xls, .csv</p>
+            <input type="file" id="excelFileInput" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)">
+          </div>
+        </div>
+
+        <!-- Existing Exercises Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-slate-200">Danh Sách Bài Tập Trong Hệ Thống</h3>
+            <span id="exerciseCountBadge" class="text-xs bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800">0 bài</span>
+          </div>
+          <div class="max-h-80 overflow-y-auto custom-scrollbar border border-slate-800 rounded-lg">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-800 text-slate-400 sticky top-0 uppercase text-[10px]">
+                <tr>
+                  <th class="p-2.5">Giai đoạn</th>
+                  <th class="p-2.5">Cấp độ</th>
+                  <th class="p-2.5">Tên bài tập</th>
+                  <th class="p-2.5">Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="exerciseTableBody" class="divide-y divide-slate-800">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: ĐỀ BÀI & PHIẾU LÀM BÀI (WORKSHEET)  -->
+    <!-- ========================================== -->
+    <section id="view-workspace" class="tab-content flex-1 flex flex-col md:flex-row overflow-hidden hidden">
+      
+      <!-- Cột 1: Đề Bài & Khung Tư Duy Gợi Ý -->
+      <div class="w-full md:w-1/2 bg-slate-900/90 border-r border-slate-800 flex flex-col h-1/2 md:h-full overflow-hidden">
+        <div class="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+          <span class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+            <i data-lucide="book-open" class="w-4 h-4"></i> Đề Bài & Hướng Dẫn Khung
+          </span>
+          <span id="currentLevelBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">Cấp độ 1</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          <!-- Exercise Title & Content -->
+          <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2">
+            <h3 id="wsExerciseTitle" class="font-bold text-slate-100 text-sm">Vui lòng chọn một bài tập từ Cây Lộ Trình</h3>
+            <p id="wsExerciseReq" class="text-xs text-slate-300 leading-relaxed">Chọn bài tập để hiển thị câu hỏi và yêu cầu thực hành.</p>
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              <span>Kỹ năng:</span>
+              <span id="wsSkillBadge" class="text-cyan-400 font-medium">Chưa chọn</span>
+            </div>
+          </div>
+
+          <!-- Single Framework Stage Info Badge -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-slate-400 flex items-center justify-between">
+              <span>Khung Tư Duy Áp Dụng:</span>
+              <button onclick="toggleFrameworkGuideModal()" class="text-indigo-400 hover:underline text-[11px] flex items-center gap-1">
+                <i data-lucide="help-circle" class="w-3 h-3"></i> Hướng dẫn chi tiết
+              </button>
+            </label>
+            <div id="activeFrameworkBadge" class="p-2.5 bg-slate-950 border border-indigo-500/50 rounded-lg text-xs font-bold text-indigo-300 flex items-center justify-between">
+              <span>KHUNG CHUNG GIAI ĐOẠN 1</span>
+              <span class="text-[10px] bg-indigo-950 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800">Cố định</span>
+            </div>
+          </div>
+
+          <!-- Framework Description & Guide Card -->
+          <div id="frameworkGuideCard" class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl space-y-1.5">
+            <p class="text-xs font-semibold text-indigo-300 flex items-center gap-1">
+              <i data-lucide="compass" class="w-3.5 h-3.5"></i> <span id="fwGuideTitle">Mô tả Khung Chung</span>
             </p>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-slate-300 text-xs font-semibold mb-1">Gemini API Key</label>
-                    <input type="password" id="api-key-input" placeholder="Nhập API Key của bạn (AI-xxxx...)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 text-sm focus:outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="bg-indigo-950/20 border border-indigo-800/30 rounded-xl p-3">
-                    <p class="text-indigo-300 text-2xs leading-relaxed">
-                        💡 <strong>Lưu ý bảo mật:</strong> Khóa API của bạn được lưu cục bộ trên thiết bị của bạn (Local Storage) và chỉ được gửi trực tiếp đến API Google Gemini khi bạn chấm bài, không qua bất kỳ máy chủ trung gian nào.
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button id="api-cancel-btn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 px-4 rounded-xl transition text-sm">
-                    Đóng
-                </button>
-                <button id="api-save-btn" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-3 px-4 rounded-xl transition text-sm shadow-lg shadow-indigo-600/10">
-                    Lưu cấu hình
-                </button>
-            </div>
-        </div>
-    </div>
+            <p id="fwGuideDesc" class="text-[11px] text-slate-300 leading-normal">Hướng dẫn sử dụng khung sẽ xuất hiện tại đây.</p>
+          </div>
 
-    <!-- HEADER -->
-    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-900 px-4 py-3 flex items-center justify-between z-40 shrink-0">
-        <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
-                <span class="font-display font-black text-lg">M</span>
-            </div>
-            <div>
-                <h1 class="text-sm font-bold tracking-tight text-white leading-none">MindGym</h1>
-                <p class="text-3xs text-slate-500 mt-0.5">Luyện Tư Duy 10 Cấp Độ</p>
-            </div>
+          <!-- AI Exercise Generator Button -->
+          <button onclick="generateAIExercise()" class="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md transition">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Tạo Đề Bài Mới Bằng Gemini AI
+          </button>
         </div>
-        <div class="flex items-center gap-2">
-            <button id="header-api-btn" class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition text-xs flex items-center gap-1.5 active:scale-95">
-                <span>🤖 AI</span>
+      </div>
+
+      <!-- Cột 2: Phiếu Làm Bài (Worksheet Input) & LIVE TREE VIEW -->
+      <div class="w-full md:w-1/2 bg-slate-950 flex flex-col h-1/2 md:h-full overflow-hidden">
+        <div class="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+          <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+            <i data-lucide="edit-3" class="w-4 h-4"></i> Phiếu Làm Bài (Worksheet)
+          </span>
+          <div class="flex items-center space-x-1">
+            <button onclick="startTimer(300)" class="text-[11px] bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded hover:bg-amber-900">
+              ⏱️ 5 phút
             </button>
-            <div class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-2xs font-semibold flex items-center gap-1">
-                <span id="streak-indicator">🔥 0</span> ngày
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 overflow-y-auto px-4 py-4 relative hide-scrollbar">
-        <!-- Dashboard / Roadmap View -->
-        <div id="view-roadmap" class="space-y-6">
-            <div class="bg-gradient-to-r from-slate-900 to-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
-                <div class="absolute -right-12 -bottom-12 w-32 h-32 bg-indigo-600/10 rounded-full blur-2xl"></div>
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-base font-bold text-white">Tiến độ rèn luyện</h2>
-                    <span id="overall-percentage" class="text-indigo-400 text-xs font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full">0%</span>
-                </div>
-                <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden mb-4">
-                    <div id="overall-progress-bar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <div class="grid grid-cols-3 gap-2.5 text-center">
-                    <div class="bg-slate-950/60 border border-slate-800/50 rounded-xl p-2.5">
-                        <div id="total-done-stat" class="text-base font-extrabold text-white">0/100</div>
-                        <div class="text-4xs text-slate-400 uppercase tracking-widest mt-0.5">Đã làm</div>
-                    </div>
-                    <div class="bg-slate-950/60 border border-slate-800/50 rounded-xl p-2.5">
-                        <div id="avg-score-stat" class="text-base font-extrabold text-white">--</div>
-                        <div class="text-4xs text-slate-400 uppercase tracking-widest mt-0.5">Điểm TB</div>
-                    </div>
-                    <div class="bg-slate-950/60 border border-slate-800/50 rounded-xl p-2.5">
-                        <div id="unlocked-badge-stat" class="text-base font-extrabold text-white">0</div>
-                        <div class="text-4xs text-slate-400 uppercase tracking-widest mt-0.5">Danh hiệu</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Level Cards Roadmap -->
-            <div class="space-y-3.5">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Hành trình 10 Cấp Độ</h3>
-                    <span class="text-3xs text-slate-500">Mở khóa tuần tự</span>
-                </div>
-                <div id="levels-list" class="space-y-3">
-                    <!-- Levels injected dynamically by JS -->
-                </div>
-            </div>
+          </div>
         </div>
 
-        <!-- Practice / Exercise View -->
-        <div id="view-practice" class="hidden space-y-4">
-            <!-- Back Button and Header -->
-            <div class="flex items-center justify-between gap-2">
-                <button id="practice-back-btn" class="p-2.5 -ml-1 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition active:scale-95 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <div class="text-center flex-1">
-                    <div id="practice-level-title" class="text-3xs font-bold text-indigo-400 uppercase tracking-wider">CẤP ĐỘ 1</div>
-                    <h2 id="practice-ex-title" class="text-sm font-extrabold text-white leading-tight truncate max-w-[180px] mx-auto">Bài tập 1</h2>
-                </div>
-                <div class="w-10"></div> <!-- Spacer for balance -->
-            </div>
+        <!-- Dynamic Input Forms & Live Tree Sub-Split -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Top Input Form Area -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" id="worksheetInputContainer">
+            <!-- Dynamically rendered input fields according to Unified Framework -->
+          </div>
 
-            <!-- Exercise Description -->
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-2.5">
-                <div class="flex justify-between items-center">
-                    <span class="text-4xs font-bold uppercase text-slate-400 tracking-wider">Yêu cầu bài tập</span>
-                    <span id="exercise-skills-badge" class="text-3xs bg-violet-500/10 border border-violet-500/25 text-violet-400 px-2 py-0.5 rounded-full font-medium">Kỹ năng</span>
-                </div>
-                <p id="practice-ex-prompt" class="text-slate-200 text-xs leading-relaxed whitespace-pre-wrap font-medium">Nội dung bài tập...</p>
+          <!-- Bottom Sub-Section: LIVE TREE VIEW RESULT -->
+          <div class="h-48 border-t border-slate-800 bg-slate-900/80 p-3 flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-2 flex-shrink-0">
+              <span class="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                <i data-lucide="git-branch" class="w-3.5 h-3.5"></i> Cây Dữ Liệu Bài Làm (Live Tree View)
+              </span>
+              <span class="text-[10px] text-slate-500">Tự động cập nhật</span>
             </div>
-
-            <!-- Interactive Answers Form -->
-            <div id="answers-container" class="space-y-4">
-                <!-- Injected based on exercise type -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs font-mono text-slate-300 space-y-1" id="liveTreeView">
+              <!-- Tree nodes render in real-time -->
             </div>
-
-            <!-- Action Buttons -->
-            <div class="space-y-2 pt-2">
-                <button id="btn-submit-answer" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 px-4 rounded-xl transition text-sm shadow-lg shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
-                    <span>💾 Nộp & Chấm Điểm Bài Làm</span>
-                </button>
-                <div class="flex gap-2">
-                    <button id="btn-save-draft" class="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold py-3 px-4 rounded-xl transition text-xs active:scale-95">
-                        Lưu nháp
-                    </button>
-                    <button id="btn-ai-feedback" class="flex-1 bg-violet-950/40 border border-violet-800/30 hover:border-violet-700/50 text-violet-300 font-semibold py-3 px-4 rounded-xl transition text-xs active:scale-95 flex items-center justify-center gap-1.5">
-                        <span>🤖 Huấn Luyện Viên AI</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- AI / Local Evaluation Feedback Panel -->
-            <div id="feedback-panel" class="hidden bg-slate-900/40 border border-indigo-500/20 rounded-2xl p-4 mt-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">🎖️</span>
-                        <div>
-                            <h4 class="text-xs font-bold text-white">Kết quả đánh giá</h4>
-                            <p id="feedback-source" class="text-4xs text-slate-400">Đánh giá ngoại tuyến</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span id="feedback-score" class="text-lg font-black text-indigo-400">8</span>
-                        <span class="text-2xs text-slate-500">/10</span>
-                    </div>
-                </div>
-                <p id="feedback-text" class="text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">Ý kiến nhận xét chi tiết...</p>
-            </div>
+          </div>
         </div>
 
-        <!-- Journal / History View -->
-        <div id="view-journal" class="hidden space-y-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-base font-bold text-white">Nhật Ký Học Tập</h2>
-                    <p class="text-3xs text-slate-400">Các bài tập bạn đã rèn luyện</p>
-                </div>
-                <span id="completed-count-badge" class="text-2xs bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 px-2.5 py-1 rounded-full font-bold">0 Bài</span>
-            </div>
+        <!-- Submit Action Bar -->
+        <div class="p-3 bg-slate-900 border-t border-slate-800 flex gap-2 flex-shrink-0">
+          <button onclick="submitWorksheetForAI()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="send" class="w-4 h-4"></i> Nộp Bài & Chấm Điểm AI
+          </button>
+        </div>
+      </div>
 
-            <!-- Filter Controls -->
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: TRỢ LÝ GEMINI AI CHẤM BÀI           -->
+    <!-- ========================================== -->
+    <section id="view-ai-eval" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
+      <div class="max-w-3xl mx-auto space-y-4">
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center">
+          <span class="text-sm font-bold text-purple-400 flex items-center gap-2">
+            <i data-lucide="bot" class="w-5 h-5"></i> Kết Quả Chấm Bài Từ Gemini AI
+          </span>
+          <span id="aiScoreBadge" class="text-xs font-bold bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">Chưa chấm</span>
+        </div>
+
+        <div id="aiFeedbackContainer" class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+          <div class="text-center py-12 space-y-3 text-slate-500">
+            <i data-lucide="cpu" class="w-12 h-12 mx-auto text-slate-700"></i>
+            <p class="text-xs">Chưa có bài làm được chấm.<br>Hãy sang Tab <strong class="text-slate-300">"Đề Bài & Phiếu Làm Bài"</strong> hoàn thành bài làm và nhấn <strong class="text-emerald-400">"Nộp Bài & Chấm Điểm AI"</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: THƯ VIỆN BẢO BỐI                     -->
+    <!-- ========================================== -->
+    <section id="view-knowledge" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
+      <div class="max-w-4xl mx-auto space-y-4">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
+            <i data-lucide="book-marked"></i> Thư Viện Bảo Bối (Phản Ứng, 36 Kế, Động Lực)
+          </h2>
+          <!-- Search Input -->
+          <div class="relative w-full sm:w-64">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500"></i>
+            <input type="text" id="knowledgeSearchInput" onkeyup="searchKnowledgeBase()" placeholder="Tìm kiếm từ khóa..." class="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- Sub Tabs -->
+        <div class="flex border-b border-slate-800 text-xs font-semibold bg-slate-900/50 rounded-t-xl overflow-hidden">
+          <button onclick="switchKnowledgeTab('phan_ung')" id="kTab-phan_ung" class="flex-1 py-2.5 text-indigo-400 border-b-2 border-indigo-500 font-bold bg-slate-900">Phản Ứng Thụ Động</button>
+          <button onclick="switchKnowledgeTab('binh_phap')" id="kTab-binh_phap" class="flex-1 py-2.5 text-slate-400 hover:text-slate-200">36 Kế Binh Pháp</button>
+          <button onclick="switchKnowledgeTab('dong_luc')" id="kTab-dong_luc" class="flex-1 py-2.5 text-slate-400 hover:text-slate-200">67 Đòn Bẩy Động Lực</button>
+        </div>
+
+        <!-- Cards List Grid -->
+        <div id="knowledgeCardsList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB PHỤ: CÀI ĐẶT & BÁO CÁO (SETTINGS & PROGRESS) -->
+    <section id="view-settings" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- API Key Settings Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+          <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
+            <i data-lucide="key"></i> Cấu Hình Gemini API Key
+          </h2>
+          <div class="space-y-2">
+            <label class="text-xs text-slate-300">Nhập Google Gemini API Key cá nhân của bạn:</label>
             <div class="flex gap-2">
-                <input type="text" id="journal-search" placeholder="Tìm kiếm bài tập..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
-                <select id="journal-filter-level" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none">
-                    <option value="all">Tất cả cấp độ</option>
-                    <option value="1">Cấp độ 1</option>
-                    <option value="2">Cấp độ 2</option>
-                    <option value="3">Cấp độ 3</option>
-                    <option value="4">Cấp độ 4</option>
-                    <option value="5">Cấp độ 5</option>
-                    <option value="6">Cấp độ 6</option>
-                    <option value="7">Cấp độ 7</option>
-                    <option value="8">Cấp độ 8</option>
-                    <option value="9">Cấp độ 9</option>
-                    <option value="10">Cấp độ 10</option>
-                </select>
+              <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="flex-1 p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+              <button onclick="saveApiKey()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition">Lưu Key</button>
             </div>
-
-            <!-- Completed List -->
-            <div id="journal-list" class="space-y-3">
-                <!-- Dynamically injected completed tasks -->
-            </div>
+            <p class="text-[11px] text-slate-500">API Key được lưu an toàn trong kho dữ liệu cục bộ (LocalStorage) trình duyệt của bạn, không gửi về bất kỳ máy chủ trung gian nào.</p>
+          </div>
         </div>
 
-        <!-- Profile / Achievements View -->
-        <div id="view-profile" class="hidden space-y-6">
-            <!-- User Info Card -->
-            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                    🧠
-                </div>
-                <div>
-                    <h2 class="text-base font-bold text-white">Học Viên Tư Duy</h2>
-                    <p id="profile-rank" class="text-2xs text-indigo-400 mt-0.5">Tập Sự Quan Sát</p>
-                    <p class="text-3xs text-slate-500 mt-1">Bắt đầu học từ 2026</p>
-                </div>
+        <!-- Progress Radar Chart & Statistics -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+          <h2 class="text-base font-bold text-cyan-400 flex items-center gap-2">
+            <i data-lucide="pie-chart"></i> Báo Cáo Năng Lực Tư Duy 4 Giai Đoạn
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="relative w-full max-w-xs mx-auto aspect-square">
+              <canvas id="radarChartCanvas"></canvas>
             </div>
-
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 text-center">
-                    <span class="text-lg">📊</span>
-                    <div id="stat-words-written" class="text-lg font-black text-white mt-1">0</div>
-                    <div class="text-4xs text-slate-400 uppercase tracking-widest mt-0.5">Tổng số từ viết</div>
-                </div>
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 text-center">
-                    <span class="text-lg">🎖️</span>
-                    <div id="stat-avg-score" class="text-lg font-black text-white mt-1">--</div>
-                    <div class="text-4xs text-slate-400 uppercase tracking-widest mt-0.5">Điểm Trung bình</div>
-                </div>
+            <div class="space-y-3 text-xs">
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Giai đoạn 1 (Mắt Sắc - Óc Nạo):</span>
+                <span id="scoreG1" class="font-bold text-indigo-400">0/100</span>
+              </div>
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Giai đoạn 2 (Đọc Vị Logic):</span>
+                <span id="scoreG2" class="font-bold text-cyan-400">0/100</span>
+              </div>
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Giai đoạn 3 (Đánh Giá & Sáng Tạo):</span>
+                <span id="scoreG3" class="font-bold text-purple-400">0/100</span>
+              </div>
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                <span class="text-slate-400">Giai đoạn 4 (Phản Xạ Thực Chiến):</span>
+                <span id="scoreG4" class="font-bold text-emerald-400">0/100</span>
+              </div>
             </div>
-
-            <!-- Badges List -->
-            <div class="space-y-3">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Bộ Sưu Tập Huy Hiệu</h3>
-                <div id="badges-container" class="grid grid-cols-2 gap-3">
-                    <!-- Badges injected dynamically by JS -->
-                </div>
-            </div>
-
-            <!-- Backup and Reset Options -->
-            <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-3">
-                <h4 class="text-xs font-bold text-white">Quản lý dữ liệu</h4>
-                <p class="text-3xs text-slate-400">Xuất dữ liệu học tập của bạn thành định dạng sao lưu để khôi phục sau này.</p>
-                <div class="flex gap-2">
-                    <button id="btn-export-data" class="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition text-2xs active:scale-95">
-                        📤 Xuất dữ liệu
-                    </button>
-                    <button id="btn-import-data" class="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition text-2xs active:scale-95">
-                        📥 Nhập dữ liệu
-                    </button>
-                </div>
-                <button id="btn-reset-data" class="w-full bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 text-red-400 font-semibold py-2.5 rounded-xl transition text-2xs active:scale-95 mt-1">
-                    🗑️ Xóa sạch tiến độ học tập
-                </button>
-            </div>
+          </div>
         </div>
-    </main>
 
-    <!-- NATIVE BOTTOM NAVIGATION -->
-    <nav class="bg-slate-950 border-t border-slate-900 px-3 py-2 flex justify-around items-center z-40 shrink-0">
-        <button id="nav-btn-roadmap" class="flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl text-indigo-400 transition-all duration-200">
-            <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-            <span class="text-4xs font-bold uppercase tracking-wider">Hành trình</span>
+        <!-- Submission History -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-3">
+          <h3 class="text-sm font-bold text-slate-200">Lịch Sử Bài Làm & Xuất Báo Cáo</h3>
+          <div id="historyListContainer" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL: FRAMEWORK DETAILED GUIDE -->
+  <div id="frameworkGuideModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-xl p-5 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 id="modalFwTitle" class="font-bold text-sm text-indigo-400 flex items-center gap-2">
+          <i data-lucide="compass"></i> Hướng Dẫn Khung Tư Duy
+        </h3>
+        <button onclick="toggleFrameworkGuideModal(false)" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
         </button>
+      </div>
+      <div id="modalFwContent" class="flex-1 overflow-y-auto text-xs text-slate-300 space-y-3 custom-scrollbar pr-1">
+        <!-- Content injected via JS -->
+      </div>
+    </div>
+  </div>
 
-        <button id="nav-btn-practice" class="flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl text-slate-500 transition-all duration-200 relative">
-            <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            <span class="text-4xs font-bold uppercase tracking-wider">Luyện tập</span>
-            <span id="active-exercise-dot" class="absolute top-1.5 right-4 w-2 h-2 bg-indigo-500 rounded-full hidden animate-ping"></span>
-        </button>
 
-        <button id="nav-btn-journal" class="flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl text-slate-500 transition-all duration-200">
-            <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            <span class="text-4xs font-bold uppercase tracking-wider">Nhật ký</span>
-        </button>
+  <!-- JAVASCRIPT LOGIC ENGINE -->
+  <script>
+    // ==========================================
+    // 1. DATASETS & STATE MANAGEMENT
+    // ==========================================
 
-        <button id="nav-btn-profile" class="flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl text-slate-500 transition-all duration-200">
-            <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            <span class="text-4xs font-bold uppercase tracking-wider">Cá nhân</span>
-        </button>
-    </nav>
+    let apiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+    let exercises = JSON.parse(localStorage.getItem('MIND_EXERCISES')) || [];
+    let historyLogs = JSON.parse(localStorage.getItem('MIND_HISTORY')) || [];
+    let currentExercise = null;
+    let currentKnowledgeTab = 'phan_ung';
+    let timerInterval = null;
 
-    <!-- EMBEDDED COGNITIVE EXERCISE DATABASE -->
-    <script>
-        const exercisesDB = {
-            1: {
-                levelTitle: "Quan sát",
-                icon: "👁️",
-                theme: "from-blue-600 to-indigo-600",
-                badgeName: "Tập Sự Quan Sát",
-                badgeIcon: "🔍",
-                description: "Nhận biết và ghi chép trung thực các chi tiết nhỏ trong cuộc sống hàng ngày bằng mọi giác quan.",
-                tasks: [
-                    { id: 1, title: "Quan sát đồ vật", prompt: "Chọn một chiếc bút bất kỳ bên cạnh bạn.\n\nHãy quan sát thật kỹ và viết ra:\n1. Màu sắc chính xác\n2. Hình dạng tổng thể & thiết kế\n3. Chất liệu của vỏ, nắp, ngòi\n4. Kích thước ước lượng (cm)\n5. Có bao nhiêu bộ phận cấu thành?", type: "list", fields: ["Màu sắc", "Hình dạng", "Chất liệu", "Kích thước", "Số lượng bộ phận"] },
-                    { id: 2, title: "Quan sát căn phòng", prompt: "Trong 2 phút, nhìn bao quát căn phòng bạn đang ngồi.\n\nNhắm mắt lại và viết nhanh:\n- 20 đồ vật bạn nhìn thấy.\n- Đồ vật nào lớn nhất?\n- Đồ vật nào nhỏ nhất?", type: "list_custom", placeholder: "Đồ vật..." },
-                    { id: 3, title: "Quan sát con người", prompt: "Quan sát một người xung quanh hoặc người thân trong gia đình.\n\nGhi chú chi tiết về:\n- Trang phục đang mặc\n- Kiểu tóc & màu tóc\n- Nét mặt hiện tại\n- Tư thế đứng/ngồi\n- Họ đang làm gì cụ thể", type: "list", fields: ["Trang phục", "Kiểu tóc", "Nét mặt", "Tư thế", "Hoạt động"] },
-                    { id: 4, title: "Quan sát thiên nhiên", prompt: "Ra ngoài hoặc nhìn qua cửa sổ và quan sát một cái cây.\n\nViết nhận định của bạn về:\n- Màu sắc của lá (xanh nhạt, vàng, úa...)\n- Hình dáng thân cây\n- Số lượng cành lớn ước lượng\n- Cây có hoa hay quả gì không?\n- Có sinh vật nào sống trên cây không (chim, kiến...)?", type: "list", fields: ["Màu lá", "Hình dáng thân", "Số lượng cành lớn", "Hoa/Quả", "Sinh vật ký sinh"] },
-                    { id: 5, title: "Quan sát đa giác quan", prompt: "Chọn một quả (quả cam, táo hoặc bất kỳ quả nào có sẵn).\n\nMô tả chi tiết trải nghiệm bằng mọi giác quan:\n- Thị giác: Nhìn thấy gì?\n- Xúc giác: Sờ thấy bề mặt ra sao?\n- Khứu giác: Ngửi thấy mùi hương gì?\n- Vị giác: Nếm thấy vị gì khi ăn?\n- Thính giác: Nghe thấy âm thanh gì khi bóp nhẹ hoặc gõ vào?", type: "list", fields: ["Thị giác", "Xúc giác", "Khứu giác", "Vị giác", "Thính giác"] },
-                    { id: 6, title: "Quan sát sự thay đổi", prompt: "Đặt một cốc nước ngoài trời (hoặc gần cửa sổ) trong 30 phút.\n\nGhi chép sự thay đổi ở 4 mốc thời gian:\n- Ban đầu\n- Sau 10 phút\n- Sau 20 phút\n- Sau 30 phút\nCó bất kỳ thay đổi nào về nhiệt độ cốc, bong bóng nước hay hạt bụi không?", type: "list", fields: ["Ban đầu", "Sau 10 phút", "Sau 20 phút", "Sau 30 phút", "Kết luận thay đổi"] },
-                    { id: 7, title: "Quan sát chi tiết", prompt: "Quan sát một chiếc xe máy (hoặc xe đạp) đang đỗ.\n\nLiệt kê ít nhất 30 chi tiết cấu thành khác nhau mà mắt bạn nhìn thấy trực tiếp (ốc vít, xích, gương, yên, nan hoa...).", type: "list_custom", placeholder: "Chi tiết xe..." },
-                    { id: 8, title: "Quan sát và ghi nhớ", prompt: "Nhìn một bức tranh hoặc một tấm ảnh phức tạp trong đúng 60 giây.\n\nChe bức tranh lại và ngay lập tức viết ra ít nhất 20 chi tiết bạn còn ghi nhớ rõ rệt.", type: "list_custom", placeholder: "Chi tiết ghi nhớ được..." },
-                    { id: 9, title: "Quan sát có mục tiêu", prompt: "Quan sát một cửa hàng hoặc quán ăn gần nhà.\n\nGhi nhận các số liệu sau:\n- Có bao nhiêu khách hàng?\n- Có bao nhiêu nhân viên?\n- Các mặt hàng nổi bật nhất là gì?\n- Màu sắc chủ đạo của thiết kế?\n- Cách sắp xếp hàng hóa thế nào?", type: "list", fields: ["Số lượng khách", "Số lượng nhân viên", "Mặt hàng nổi bật", "Màu sắc chủ đạo", "Bố cục sắp xếp"] },
-                    { id: 10, title: "Quan sát và đặt câu hỏi", prompt: "Quan sát một ngã tư đường trong vòng 5 phút.\n\nGhi chép:\n- 30 điều quan sát thực tế.\n- 15 điều bạn suy đoán dựa trên quan sát.\n- 10 câu hỏi nảy sinh trong đầu bạn từ những gì đã quan sát.", type: "list", fields: ["30 Điều quan sát", "15 Suy đoán", "10 Câu hỏi"] }
-                ]
-            },
-            2: {
-                levelTitle: "So sánh",
-                icon: "⚖️",
-                theme: "from-emerald-600 to-teal-600",
-                badgeName: "Bậc Thầy So Sánh",
-                badgeIcon: "⚖️",
-                description: "Nhận dạng điểm tương đồng và dị biệt giữa nhiều đối tượng theo các tiêu chí và góc nhìn khoa học.",
-                tasks: [
-                    { id: 1, title: "So sánh hai đồ vật", prompt: "Đối tượng: Bút bi và bút chì.\n\nHãy lập bảng liệt kê:\n- 10 điểm giống nhau về cấu tạo/công dụng.\n- 10 điểm khác nhau.\n- Kết luận: Khi nào nên dùng từng loại cụ thể?", type: "list", fields: ["10 Điểm giống nhau", "10 Điểm khác nhau", "Kết luận khuyên dùng"] },
-                    { id: 2, title: "So sánh theo tiêu chí", prompt: "Đối tượng: Xe đạp và xe máy.\n\nSo sánh và đánh giá điểm số (1-5) theo các tiêu chí sau:\n- Giá thành mua và duy trì\n- Tốc độ di chuyển\n- Chi phí vận hành\n- Độ an toàn\n- Bảo dưỡng định kỳ\n- Mức độ bảo vệ môi trường", type: "table", criteria: ["Giá thành", "Tốc độ", "Chi phí vận hành", "Độ an toàn", "Bảo dưỡng", "Bảo vệ môi trường"], targets: ["Xe đạp", "Xe máy"] },
-                    { id: 3, title: "So sánh theo thời gian", prompt: "Đối tượng: Cuộc sống của chính bạn.\n\nHãy so sánh bản thân ở thời điểm học Lớp 1 và Hiện nay dựa trên 5 khía cạnh:\n- Kiến thức\n- Bạn bè\n- Kỹ năng\n- Sở thích cá nhân\n- Trách nhiệm gánh vác", type: "list", fields: ["Kiến thức (Lớp 1 vs Hiện tại)", "Bạn bè (Lớp 1 vs Hiện tại)", "Kỹ năng (Lớp 1 vs Hiện tại)", "Sở thích (Lớp 1 vs Hiện tại)", "Trách nhiệm (Lớp 1 vs Hiện tại)"] },
-                    { id: 4, title: "So sánh theo chức năng", prompt: "Đối tượng: Quạt điện và máy điều hòa lạnh.\n\nSo sánh kỹ lưỡng về:\n- Chức năng chính\n- Chức năng phụ kèm theo\n- Điểm mạnh cốt lõi\n- Điểm yếu hạn chế\n- Kết luận: Nên sử dụng từng loại trong bối cảnh nào để tối ưu?", type: "list", fields: ["Chức năng chính", "Chức năng phụ", "Điểm mạnh", "Điểm yếu", "Bối cảnh sử dụng tối ưu"] },
-                    { id: 5, title: "So sánh theo cấu tạo", prompt: "Đối tượng: Xe máy và xe đạp máy.\n\nLiệt kê các linh kiện, bộ phận của chúng và phân loại thành:\n- Bộ phận giống nhau tuyệt đối\n- Bộ phận khác nhau hoặc nâng cấp riêng biệt", type: "list", fields: ["Bộ phận giống nhau", "Bộ phận khác biệt hoàn toàn"] },
-                    { id: 6, title: "So sánh nhân quả", prompt: "Đối tượng: Việc học chăm chỉ và việc học lười biếng.\n\nLập bảng so sánh đa chiều:\n- Nguyên nhân sâu xa\n- Hành động thực tế hàng ngày\n- Kết quả ngắn hạn (trong tuần/tháng)\n- Kết quả dài hạn (sau 5-10 năm)", type: "list", fields: ["Nguyên nhân học chăm vs lười", "Hành động thực tế mỗi bên", "Kết quả ngắn hạn mỗi bên", "Hậu quả/Kết quả dài hạn"] },
-                    { id: 7, title: "So sánh nhiều đối tượng", prompt: "Đối tượng: Quả táo, quả cam và quả chuối.\n\nSo sánh đồng thời 3 loại quả dựa trên:\n- Màu sắc bên ngoài & bên trong\n- Hương vị đặc trưng\n- Giá thành trung bình trên thị trường\n- Giá trị dinh dưỡng cốt lõi\n- Cách sơ chế/sử dụng", type: "list", fields: ["Thực phẩm: Táo", "Thực phẩm: Cam", "Thực phẩm: Chuối", "Xếp hạng dinh dưỡng / Tiện lợi"] },
-                    { id: 8, title: "So sánh hai giải pháp", prompt: "Tình huống: Di chuyển hàng ngày đến trường/nơi làm việc.\nPhương án 1: Xe đạp cá nhân\nPhương án 2: Xe buýt công cộng\n\nHãy so sánh chi tiết dựa trên: Chi phí, Thời gian, Sức khỏe thể chất, An toàn giao thông, Tính chủ động.", type: "list", fields: ["So sánh về Chi phí & Thời gian", "So sánh về Sức khỏe & An toàn", "So sánh về Tính chủ động", "Quyết định cuối cùng của bạn"] },
-                    { id: 9, title: "So sánh theo góc nhìn", prompt: "Đối tượng: Điện thoại thông minh (Smart Phone).\n\nSo sánh mặt lợi ích và mặt hạn chế của chiếc điện thoại dưới 4 lăng kính góc nhìn khác nhau:\n- Góc nhìn của Học sinh\n- Góc nhìn của Phụ huynh\n- Góc nhìn của Giáo viên\n- Góc nhìn của Nhà sản xuất", type: "list", fields: ["Góc nhìn Học sinh", "Góc nhìn Phụ huynh", "Góc nhìn Giáo viên", "Góc nhìn Nhà sản xuất"] },
-                    { id: 10, title: "So sánh để ra quyết định", prompt: "Tình huống: Bạn tiết kiệm được khoản ngân sách 10 triệu đồng.\nLựa chọn A: Mua máy tính làm việc\nLựa chọn B: Mua chiếc xe đạp thể thao\nLựa chọn C: Gửi tiết kiệm ngân hàng\n\nHãy phân tích và so sánh kỹ về: Chi phí, Lợi ích thực tế, Rủi ro đi kèm, Giá trị lâu dài và Mức độ cần thiết hiện tại.", type: "list", fields: ["Chi phí & Lợi ích", "Rủi ro từng lựa chọn", "Giá trị lâu dài & Độ khẩn cấp", "Kết luận lựa chọn (Viết 150-200 từ)"] }
-                ]
-            },
-            3: {
-                levelTitle: "Phân loại",
-                icon: "🗂️",
-                theme: "from-cyan-600 to-blue-600",
-                badgeName: "Chuyên Gia Phân Loại",
-                badgeIcon: "📁",
-                description: "Nhóm gộp dữ liệu rời rạc thành các danh mục có hệ thống dựa trên tiêu chí quy luật logic.",
-                tasks: [
-                    { id: 1, title: "Phân loại theo một tiêu chí", prompt: "Danh sách từ: Táo, Cam, Chuối, Cà rốt, Khoai tây, Rau muống, Cải xanh, Dưa hấu, Xoài, Bắp cải.\n\nHãy:\n- Chia các từ trên thành 2 hoặc nhiều nhóm hợp lý.\n- Định nghĩa rõ ràng tiêu chí phân loại của bạn.\n- Giải thích tại sao bạn chọn tiêu chí này.", type: "list_custom", placeholder: "Phân nhóm..." },
-                    { id: 2, title: "Phân loại theo nhiều tiêu chí", prompt: "Danh sách con vật: Chó, Mèo, Cá vàng, Gà, Chim sẻ, Rắn, Cá sấu, Cá chép, Bò, Vịt.\n\nHãy phân nhóm các con vật trên đồng thời theo 4 tiêu chí độc lập:\n1. Môi trường sống chính\n2. Cách di chuyển chính\n3. Nguồn thức ăn\n4. Hình thức sinh sản", type: "list", fields: ["Nhóm theo Môi trường sống", "Nhóm theo Cách di chuyển", "Nhóm theo Nguồn thức ăn", "Nhóm theo Cách sinh sản"] },
-                    { id: 3, title: "Phân loại theo cấp bậc", prompt: "Chủ đề: Phương tiện giao thông.\n\nHãy xây dựng cấu trúc sơ đồ phân cấp dạng cây (Tree) từ vĩ mô đến vi mô.\nVí dụ bắt đầu từ: Đường bộ, Đường sắt, Đường thủy, Đường hàng không... rồi chia nhỏ sâu hơn bên trong.", type: "list", fields: ["Phương tiện Đường bộ (Cấp 1 & 2)", "Phương tiện Đường sắt", "Phương tiện Đường thủy", "Phương tiện Đường hàng không"] },
-                    { id: 4, title: "Phân loại theo mức độ", prompt: "Hãy phân loại và sắp xếp các hoạt động thể chất sau theo mức độ tiêu hao năng lượng tăng dần từ Thấp nhất đến Cao nhất:\nNgủ, Đọc sách, Đi bộ, Chạy bộ, Bơi, Đạp xe, Leo núi.\n\nGiải thích logic sắp xếp của bạn.", type: "list", fields: ["Thứ tự sắp xếp từ thấp đến cao", "Giải thích cơ chế khoa học của sự sắp xếp"] },
-                    { id: 5, title: "Phân loại theo chức năng", prompt: "Danh sách công cụ: Búa, Kìm, Tua vít, Máy khoan, Cưa, Thước, Kéo, Dao rọc giấy, Cờ lê, Mỏ lết.\n\nHãy phân nhóm các dụng cụ này thành các nhóm chức năng rõ ràng (như đo lường, cắt gọt, siết chặt...).", type: "list_custom", placeholder: "Nhóm chức năng..." },
-                    { id: 6, title: "Phân loại theo mối quan hệ", prompt: "Danh sách từ khóa: Giáo viên, Học sinh, Trường học, Lớp học, Bảng, Phấn, Sách giáo khoa, Bài kiểm tra, Điểm số, Phụ huynh.\n\nHãy phân nhóm chúng thành các mối liên kết hữu cơ có logic và giải thích mối quan hệ đó.", type: "list", fields: ["Nhóm 1 và mối quan hệ", "Nhóm 2 và mối quan hệ", "Nhóm 3 và mối quan hệ"] },
-                    { id: 7, title: "Phân loại theo quy luật", prompt: "Cho dãy số hỗn hợp sau: 2, 4, 6, 7, 8, 10, 12, 13, 14, 16, 18.\n\nHãy phân loại dãy số này thành các nhóm khác nhau dựa trên ít nhất 3 quy luật toán học độc lập khác nhau.", type: "list", fields: ["Phân loại theo quy luật 1", "Phân loại theo quy luật 2", "Phân loại theo quy luật 3"] },
-                    { id: 8, title: "Phân loại theo góc nhìn mục đích", prompt: "Đối tượng: Điện thoại thông minh.\n\nHãy phân loại tất cả các tính năng của điện thoại dựa trên mục đích sử dụng thực tế:\n- Phục vụ Học tập\n- Phục vụ Giải trí\n- Phục vụ Công việc chuyên môn\n- Phục vụ Liên lạc\n- Phục vụ Bảo mật", type: "list", fields: ["Nhóm Học tập", "Nhóm Giải trí", "Nhóm Công việc", "Nhóm Liên lạc & Bảo mật"] },
-                    { id: 9, title: "Phân loại thông tin quan trọng", prompt: "Hãy đọc một bài báo ngắn 500 từ bất kỳ hôm nay.\n\nPhân tích và gạt lọc thông tin vào các nhóm:\n- Sự kiện thực tế (Fact)\n- Nguyên nhân bối cảnh\n- Hậu quả tác động\n- Ý kiến chủ quan cá nhân\n- Số liệu thống kê khoa học\n- Giải pháp đề xuất", type: "list", fields: ["Nhóm Sự kiện & Số liệu thực tế", "Nhóm Nguyên nhân & Hậu quả", "Nhóm Ý kiến cá nhân & Giải pháp đề xuất"] },
-                    { id: 10, title: "Tự xây dựng hệ thống phân loại", prompt: "Hãy tự chọn 1 chủ đề mở bất kỳ (Phim ảnh, Sách truyện, Nghề nghiệp, Các món ăn, Cây trồng...).\n\nYêu cầu tự thiết kế một hệ thống phân loại gồm:\n- Tối thiểu 4 cấp phân loại có thứ bậc.\n- Mỗi cấp có ít nhất 3 nhóm nhỏ.\n- Đưa ra tối thiểu 30 ví dụ minh họa phân bổ đều vào các nhóm.", type: "list", fields: ["Chủ đề chọn lựa", "Hệ thống phân cấp (4 Cấp bậc)", "Các ví dụ minh họa phân bổ (Ít nhất 30)", "Giải thích tính hợp lý của hệ thống"] }
-                ]
-            },
-            4: {
-                levelTitle: "Phân tích",
-                icon: "🧩",
-                theme: "from-violet-600 to-fuchsia-600",
-                badgeName: "Chuyên Gia Phân Tích",
-                badgeIcon: "🧩",
-                description: "Mổ xẻ một vấn đề phức tạp hoặc hệ thống lớn thành các phần tử cấu thành và cơ chế liên đới.",
-                tasks: [
-                    { id: 1, title: "Phân tích cấu tạo", prompt: "Đối tượng: Chiếc xe đạp.\n\nHãy thực hiện:\n- Liệt kê các hệ thống phụ (khung, truyền lực, điều hướng, phanh...).\n- Mô tả chi tiết chức năng từng hệ thống.\n- Chuyện gì xảy ra nếu hệ thống phanh bị vô hiệu hóa?", type: "list", fields: ["Lập danh sách bộ phận chính", "Chức năng từng hệ thống", "Mô tả hệ quả khi thiếu bộ phận"] },
-                    { id: 2, title: "Phân tích quy trình", prompt: "Đối tượng: Nấu cơm bằng nồi cơm điện.\n\nPhân tích:\n- Các bước theo trình tự thời gian.\n- Đầu vào (input) và đầu ra (output) của từng bước đơn lẻ.\n- Bước nào là then chốt nhất quyết định chất lượng cơm nấu?\n- Hậu quả nếu bỏ qua bước vo gạo hoặc đo nước?", type: "list", fields: ["Các bước thực hiện tuần tự", "Phân tích Đầu vào & Đầu ra từng bước", "Bước quan trọng nhất & Lý do"] },
-                    { id: 3, title: "Phân tích hệ thống", prompt: "Đối tượng: Một ngôi trường học.\n\nPhân tích và vẽ liên kết giữa các thành phần sau:\n- Học sinh\n- Giáo viên\n- Ban giám hiệu\n- Phụ huynh học sinh\n- Cơ sở vật chất vật lý\nThành phần nào đóng vai trò tác động lớn nhất tới chất lượng giảng dạy chung?", type: "list", fields: ["Các thành phần chính", "Bản đồ liên kết và tác động qua lại", "Thành phần cốt lõi quyết định chất lượng"] },
-                    { id: 4, title: "Phân tích nguyên nhân gốc rễ", prompt: "Tình huống: Một học sinh trong lớp liên tục đi học muộn.\n\nHãy sử dụng kỹ thuật phân tích \"5 Whys\" (5 câu hỏi Tại sao liên tiếp) để bóc tách 5 nguyên nhân trực tiếp ban đầu tìm ra nguyên nhân gốc rễ ẩn sâu bên dưới và giải pháp.", type: "list", fields: ["Nguyên nhân trực tiếp 1", "Chuỗi câu hỏi Tại sao & Nguyên nhân gốc", "Đề xuất giải pháp triệt để"] },
-                    { id: 5, title: "Phân tích chức năng", prompt: "Đối tượng: Điện thoại di động thông minh.\n\nPhân chia chức năng thành:\n- Chức năng cốt lõi (Core)\n- Chức năng bổ trợ tiện ích\n- Chức năng giải trí thụ động\n- Chức năng an toàn bảo mật\nChức năng nào có sức ảnh hưởng trực tiếp nhiều nhất tới học tập?", type: "list", fields: ["Danh sách Chức năng cốt lõi", "Chức năng bổ trợ & giải trí", "Nhóm Chức năng quan trọng nhất cho học tập"] },
-                    { id: 6, title: "Phân tích dữ liệu học tập", prompt: "Tình huống: Nhận bảng điểm của 10 học sinh trong lớp ở 3 môn học chính.\n\nHãy nêu quy trình phân tích:\n- Tìm học sinh xuất sắc nhất và kém nhất.\n- Xác định xu thế điểm chung của cả tập thể lớp.\n- Đề xuất 3 hành động cụ thể để cải thiện kết quả học tập cho lớp.", type: "list", fields: ["Nhận diện học sinh biên (Max/Min)", "Xu thế học lực chung của lớp", "3 Biện pháp can thiệp hành động"] },
-                    { id: 7, title: "Phân tích tình huống kinh doanh", prompt: "Tình huống: Một cửa hàng bán lẻ có doanh số sụt giảm nghiêm trọng trong tháng qua.\n\nPhân tích các nhóm nhân tố tác động:\n- Nhân tố bên trong doanh nghiệp (chất lượng sản phẩm, thái độ phục vụ...)\n- Nhân tố bên ngoài (đối thủ, xu hướng thị trường...)\nXác định 3 nguyên nhân cốt tử nhất và đề xuất giải pháp cứu vãn.", type: "list", fields: ["Nhân tố tác động bên trong", "Nhân tố tác động bên ngoài", "3 Nguyên nhân cốt tử & Giải pháp ứng phó"] },
-                    { id: 8, title: "Phân tích văn bản nghị luận", prompt: "Hãy đọc một bài luận xã hội ngắn khoảng 700 từ.\n\nPhân tích cấu trúc lập luận:\n- Ý chính và chủ đề lớn là gì?\n- Các luận điểm bổ trợ chính?\n- Các luận cứ, số liệu, dẫn chứng thực tế?\n- Đánh giá tính thuyết phục của tác giả.", type: "list", fields: ["Chủ đề & Ý chính", "Hệ thống luận điểm & luận cứ", "Nhận xét tính thuyết phục khách quan"] },
-                    { id: 9, title: "Phân tích quyết định mua sắm", prompt: "Tình huống: Gia đình bạn chuẩn bị đầu tư mua một chiếc máy giặt mới.\n\nHãy lập bảng tiêu chí phân tích:\n- Các tiêu chí lựa chọn quan trọng (Giá, Thể tích, Thương hiệu, Tiết kiệm điện...)\n- Phân tích ưu nhược điểm từng phân khúc.\n- Nhận định rủi ro kỹ thuật có thể xảy ra.", type: "list", fields: ["Hệ tiêu chí chọn lựa", "Phân tích ưu nhược điểm các phương án", "Phân tích rủi ro & Quyết định cuối cùng"] },
-                    { id: 10, title: "Phân tích toàn diện một vấn đề", prompt: "Hãy chọn một vấn đề xã hội nóng bỏng (Ô nhiễm nhựa, Nghiện game điện thoại, Kẹt xe đô thị, Lãng phí đồ ăn...).\n\nThực hiện phân tích tổng hòa:\n1. Định nghĩa thực trạng\n2. Các tác nhân liên quan trực tiếp\n3. Các nguyên nhân cốt lõi\n4. Các hậu quả nhãn tiền & lâu dài\n5. Đánh giá giải pháp hiện nay & đề xuất giải pháp đột phá mới.", type: "list", fields: ["Thực trạng vấn đề xã hội", "Phân tích Nguyên nhân & Tác nhân", "Phân tích Hậu quả xã hội", "Giải pháp mới mang tính đột phá"] }
-                ]
-            },
-            5: {
-                levelTitle: "Tư duy nhân quả",
-                icon: "⛓️",
-                theme: "from-amber-600 to-orange-600",
-                badgeName: "Nhà Logic Nhân Quả",
-                badgeIcon: "⛓️",
-                description: "Nhìn thấu chuỗi tác động Domino, phân biệt tương quan với nhân quả thực sự trong các hiện tượng.",
-                tasks: [
-                    { id: 1, title: "Một kết quả - nhiều nguyên nhân", prompt: "Hiện tượng: Một cái cây cảnh trồng trong nhà đột nhiên bị héo úa lá.\n\nHãy động não tìm ra ít nhất 15 nguyên nhân có khả năng gây ra hiện tượng này, phân loại thành: tự nhiên, do con người chăm sóc sai cách, do sâu bệnh.", type: "list_custom", placeholder: "Nguyên nhân có thể..." },
-                    { id: 2, title: "Một nguyên nhân - nhiều hậu quả", prompt: "Tình huống: Một thành phố lớn bị mất điện diện rộng liên tục trong vòng 24 giờ.\n\nHãy dự báo và liệt kê ít nhất 20 hậu quả dây chuyền tác động tới: Đời sống các gia đình, Hoạt động sản xuất, Hệ thống bệnh viện, Giao thông công cộng.", type: "list_custom", placeholder: "Hậu quả tác động dây chuyền..." },
-                    { id: 3, title: "Xây dựng chuỗi nhân quả liên hoàn", prompt: "Bắt đầu bằng hành động ban đầu: \"Học sinh chăm chỉ tự học mỗi ngày\".\n\nHãy xây dựng một chuỗi liên hoàn tối thiểu 10 mắt xích dạng: A dẫn đến B, B dẫn đến C, C dẫn đến D... Giải thích mắt xích nào mang tính bước ngoặt lớn nhất.", type: "list_custom", placeholder: "Mắt xích tiếp theo..." },
-                    { id: 4, title: "Phân biệt nguyên nhân trực tiếp và gián tiếp", prompt: "Tình huống: Một cửa hàng ăn uống bị sụt giảm 50% doanh thu trong vòng 2 tuần.\n\nLiệt kê các nguyên nhân có thể và phân loại rõ ràng thành:\n- Nguyên nhân trực tiếp (mất đầu bếp, tăng giá...)\n- Nguyên nhân gián tiếp (đối thủ chạy quảng cáo mạnh, thời tiết mưa liên tục...)", type: "list", fields: ["Nguyên nhân trực tiếp", "Nguyên nhân gián tiếp", "Nhận định mức độ ảnh hưởng của nguyên nhân gián tiếp"] },
-                    { id: 5, title: "Phân tích nguyên nhân gốc rễ bằng biểu đồ xương cá", prompt: "Tình huống: Học sinh thường xuyên không hoàn thành bài tập về nhà đúng hạn.\n\nHãy phân nhóm nguyên nhân theo các nhóm xương cá chuẩn hóa:\n- Nhóm Con người (sức khỏe, thái độ...)\n- Nhóm Phương pháp (quá khó, không khoa học...)\n- Nhóm Môi trường (ồn ào, không tập trung...)\n- Nhóm Công cụ hỗ trợ (thiếu máy tính, thiếu tài liệu...)", type: "list", fields: ["Nhóm Con người", "Nhóm Phương pháp & Công cụ", "Nhóm Môi trường", "Xác định nguyên nhân gốc rễ sâu thẳm"] },
-                    { id: 6, title: "Phân biệt tương quan và nhân quả thực sự", prompt: "Đánh giá các cặp hiện tượng sau đây xem chúng có mối quan hệ Nhân Quả thực chất hay chỉ là mối quan hệ Tương Quan ngẫu nhiên:\n1. Trời nắng nóng -> Doanh thu bán kem tăng vọt\n2. Người mang ô ra đường -> Trời đổ mưa lớn\n3. Gà trống gáy sáng -> Mặt trời mọc ở hướng Đông\n\nGiải thích kỹ logic khoa học.", type: "list", fields: ["Cặp 1: Trời nóng & Doanh thu kem", "Cặp 2: Mang ô & Trời mưa", "Cặp 3: Gà gáy & Mặt trời mọc"] },
-                    { id: 7, title: "Phân tích vòng lặp nhân quả hệ thống", prompt: "Chủ đề: Ô nhiễm không khí đô thị.\n\nHãy mô phỏng:\n- Một vòng lặp phản hồi tích cực (hiệu ứng khuếch đại tệ hại thêm)\n- Một vòng lặp phản hồi cân bằng (cơ chế tự điều chỉnh giảm tác động hại)\nGiải thích cách thức hoạt động.", type: "list", fields: ["Vòng lặp khuếch đại tiêu cực (Reinforcing)", "Vòng lặp cân bằng/hạn chế (Balancing)", "Ứng dụng giải pháp can thiệp hệ thống"] },
-                    { id: 8, title: "Phân tích tác động dây chuyền vĩ mô", prompt: "Sự kiện kích ngòi: \"Giá xăng dầu trên thị trường tăng mạnh đột ngột\".\n\nMô tả chi tiết hiệu ứng Domino lan truyền ảnh hưởng tới:\n- Chi phí Logistics & Vận tải\n- Giá cả rau củ quả ở chợ truyền thống\n- Sức mua chung của người tiêu dùng\n- Chi phí hoạt động của doanh nghiệp sản xuất", type: "list", fields: ["Tác động tới Vận tải & Lưu thông", "Tác động tới Giá cả sinh hoạt cơ bản", "Hệ quả đến túi tiền người dân & xã hội"] },
-                    { id: 9, title: "Phân tích nhân quả đa chiều công nghệ", prompt: "Chủ đề: Học sinh ứng dụng trí tuệ nhân tạo (AI/ChatGPT) để hỗ trợ làm bài tập học tập.\n\nPhân tích đa chiều:\n- Nguyên nhân cốt yếu thúc đẩy sử dụng\n- Lợi ích nhận được\n- Các rủi ro tiềm ẩn cho tư duy độc lập\n- Hệ quả ngắn hạn & dài hạn đối với hệ thống giáo dục", type: "list", fields: ["Động lực thúc đẩy học sinh", "Tác động tích cực thực tế", "Hậu quả tiêu cực dài hạn", "Giải pháp định hướng sử dụng lành mạnh"] },
-                    { id: 10, title: "Mô phỏng kịch bản và dự báo chính sách", prompt: "Tình huống: Ủy ban thành phố ra quyết định cấm toàn bộ xe máy cá nhân hoạt động trong khu vực trung tâm quận 1.\n\nHãy dự báo tác động chi tiết theo các mốc thời gian:\n- Sau 1 tuần triển khai\n- Sau 1 tháng\n- Sau 1 năm\n- Sau 5 năm\nPhân chia thành tác động mong muốn, tác động ngoài ý muốn và biện pháp ứng phó.", type: "list", fields: ["Kịch bản ngắn hạn (1 tuần - 1 tháng)", "Dự phóng dài hạn (1 năm - 5 năm)", "Tác động tiêu cực ngoài dự kiến & Cách khắc phục"] }
-                ]
-            },
-            6: {
-                levelTitle: "Suy luận",
-                icon: "🧠",
-                theme: "from-pink-600 to-rose-600",
-                badgeName: "Nhà Tư Tưởng Logic",
-                badgeIcon: "🧠",
-                description: "Rút ra kết luận chắc chắn từ các tiền đề có sẵn bằng các phương pháp suy diễn, quy nạp.",
-                tasks: [
-                    { id: 1, title: "Suy luận diễn dịch (Deductive)", prompt: "Cho tiền đề:\n1. Tất cả loài chim đều sinh sản bằng cách đẻ trứng.\n2. Chim cánh cụt Hoàng đế là một loài chim.\n\nYêu cầu:\n- Rút ra kết luận logic.\n- Kết luận này có tuyệt đối đúng không? Giải thích vì sao.\n- Hãy tự tạo thêm 3 bộ lập luận diễn dịch tương tự.", type: "list", fields: ["Kết luận rút ra", "Giải thích tính chân lý của suy diễn", "Bộ lập luận tự tạo 1", "Bộ lập luận tự tạo 2"] },
-                    { id: 2, title: "Suy luận quy nạp (Inductive)", prompt: "Hãy quan sát quy luật của các dãy số sau:\n- 3, 6, 9, 12, 15...\n- 5, 10, 15, 20...\n- 2, 4, 8, 16...\n\nTìm quy luật toán học chung của từng dãy, viết tiếp 5 số tiếp theo và giải thích phương pháp quy nạp.", type: "list", fields: ["Quy luật dãy 1 & 5 số tiếp", "Quy luật dãy 2 & 5 số tiếp", "Quy luật dãy 3 & 5 số tiếp", "Thế nào là suy luận quy nạp?"] },
-                    { id: 3, title: "Suy luận tương tự (Analogical)", prompt: "Hoàn thành các cặp suy luận tương đồng sau đây:\n1. Bánh xe : Xe hơi :: Cánh chim : ?\n2. Giáo viên : Giảng dạy :: Bác sĩ : ?\n3. Gốc rễ : Cây xanh :: Móng nhà : ?\n\nHãy giải thích nguyên lý tương đồng và tự sáng tạo thêm 5 cặp tương đồng chất lượng.", type: "list", fields: ["Đáp án cho 3 cặp so sánh", "Giải thích cơ sở logic tương đồng", "5 Cặp tương đồng tự sáng tạo"] },
-                    { id: 4, title: "Suy luận logic loại trừ", prompt: "Câu đố: Có 4 chiếc hộp đóng kín màu sắc khác nhau (Hộp Đỏ, Hộp Xanh, Hộp Vàng, Hộp Tím). Chỉ có một chiếc hộp duy nhất chứa Chìa Khóa Vàng bên trong.\nBiết rằng các lập ngôn sau đều đúng sự thật:\n- Nếu chìa khóa ở hộp Đỏ thì chắc chắn không nằm ở hộp Vàng.\n- Chìa khóa không nằm ở hộp Xanh.\n- Nếu chìa khóa ở hộp Tím thì hộp Đỏ không chứa chìa khóa.\n- Hộp Vàng chứa chìa khóa.\n\nHãy suy luận chiếc chìa khóa đang ở hộp nào?", type: "list", fields: ["Hộp chứa chìa khóa chính xác", "Trình bày từng bước lập luận loại trừ"] },
-                    { id: 5, title: "Suy luận từ dấu hiệu thực tế", prompt: "Quan sát hiện tượng khi thức dậy: Mặt đường ướt sũng, mọi người đi đường cầm ô che, bầu trời xám xịt phủ mây dày, gió thổi mạnh quật đổ một vài biển quảng cáo nhỏ.\n\nHãy đưa ra ít nhất 3 giả thuyết giải thích hiện tượng trên, sắp xếp theo mức độ tin cậy và nêu rõ bằng chứng củng cố.", type: "list", fields: ["Giả thuyết có khả năng cao nhất", "Giả thuyết thay thế khác", "Bằng chứng bổ sung cần thiết để xác minh"] },
-                    { id: 6, title: "Suy luận xác suất thực tiễn", prompt: "Trong một chiếc hộp gỗ kín có chứa: 10 viên bi màu đỏ, 6 viên bi màu xanh dương, 4 viên bi màu vàng.\n\nKhông dùng công thức toán học, hãy suy luận:\n- Màu bi nào có khả năng bốc trúng cao nhất?\n- Chuyện gì xảy ra với cơ hội bốc trúng bi đỏ nếu chúng ta bỏ thêm vào hộp 15 viên bi vàng nữa? Lập luận logic.", type: "list", fields: ["Nhận định khả năng cao nhất & giải thích", "Nhận định sau khi thay đổi số lượng bi", "Ứng dụng suy luận xác suất trong đời sống"] },
-                    { id: 7, title: "Suy luận phản biện lập luận sai lệch", prompt: "Phân tích nhận định sau: \"Tất cả các học sinh đạt học lực xuất sắc trong trường đều đi học thêm bên ngoài. Do đó, muốn học giỏi bắt buộc phải đi học thêm.\"\n\nHãy tìm ra lỗ hổng tư duy của lập luận trên, đưa ra ít nhất 3 ví dụ thực tế phản bác và viết lại câu phát biểu cho chính xác.", type: "list", fields: ["Lỗ hổng tư duy của lập luận", "3 Ví dụ phản bác trực tiếp", "Phát biểu lại câu nhận định khoa học"] },
-                    { id: 8, title: "Suy luận phản thực tế (Counterfactual)", prompt: "Tình huống: Một học sinh không chịu ôn bài trước kỳ thi và kết quả bị trượt nghiêm trọng.\n\nHãy suy luận theo các giả định thay thế:\n- Nếu học sinh đó bắt đầu ôn từ 1 tuần trước...\n- Nếu đề thi thuộc dạng dễ hơn thông thường...\n- Nếu đêm trước kỳ thi học sinh ngủ đủ 8 tiếng...\nSo sánh các kịch bản để thấy tác nhân chính gây ra hậu quả thực tế.", type: "list", fields: ["Kịch bản ôn bài sớm", "Kịch bản đề thi dễ hoặc ngủ đủ giấc", "Nhận diện nhân tố cốt lõi gây trượt thi"] },
-                    { id: 9, title: "Suy luận dự báo xu hướng", prompt: "Quan sát số lượng học sinh đăng ký câu lạc bộ đọc sách của trường qua các năm:\n- Năm 2022: 50 học sinh\n- Năm 2023: 85 học sinh\n- Năm 2024: 130 học sinh\n- Năm 2025: 190 học sinh\n\nHãy suy luận dự báo số lượng đăng ký năm 2026 theo 3 kịch bản: Lạc quan, Thực tế bình thường, Bi quan và giải thích cơ sở.", type: "list", fields: ["Kịch bản Thực tế nhất & số lượng dự báo", "Kịch bản Lạc quan & Bi quan", "Căn cứ logic của các kịch bản dự báo"] },
-                    { id: 10, title: "Suy luận tổng hợp giải quyết khủng hoảng", prompt: "Một cửa hàng thời trang có các dấu hiệu báo động đỏ sau:\nDoanh thu sụt giảm 3 tháng liên tiếp, lượng khách hàng trung thành quay lại mua giảm 40%, trên mạng xuất hiện nhiều đánh giá dịch vụ 2 sao, nhân viên bán hàng xin nghỉ việc hàng loạt, một đối thủ lớn vừa khai trương cửa hàng hoành tráng cách đó 100m.\n\nHãy xâu chuỗi các dấu hiệu này, suy luận nguyên nhân sâu xa và đề xuất bước hành động đầu tiên.", type: "list", fields: ["Xâu chuỗi mối liên hệ giữa các dấu hiệu", "Chẩn đoán nguyên nhân sâu xa nhất", "Kế hoạch hành động khẩn cấp bước đầu"] }
-                ]
-            },
-            7: {
-                levelTitle: "Đặt giả thuyết",
-                icon: "🧪",
-                theme: "from-teal-600 to-cyan-600",
-                badgeName: "Nhà Phát Kiến Khoa Học",
-                badgeIcon: "🔬",
-                description: "Kiến tạo các khả năng giải thích mới mẻ cho hiện tượng kỳ lạ và thiết kế quy trình thử nghiệm.",
-                tasks: [
-                    { id: 1, title: "Giả thuyết giải thích hiện tượng", prompt: "Hiện tượng thực tế: Sáng sớm hôm nay bước ra sân trường thấy lá cây rụng phủ kín mặt đất nhiều bất thường so với mọi ngày.\n\nHãy đưa ra ít nhất 10 giả thuyết giải thích cho hiện tượng này (ví dụ: thời tiết, động vật tác động, con người quét dọn, vòng đời sinh học...). Chọn ra 3 giả thuyết hợp lý nhất.", type: "list_custom", placeholder: "Giả thuyết của bạn..." },
-                    { id: 2, title: "Giả thuyết tìm nguyên nhân đột biến", prompt: "Tình huống: Một học sinh luôn có lực học khá giỏi, ngoan ngoãn bỗng nhiên trong tháng này điểm số các bài kiểm tra định kỳ giảm mạnh bất ngờ.\n\nHãy đặt ít nhất 15 giả thuyết nguyên nhân khả thi phân loại theo các khía cạnh: Sức khỏe, Tâm lý cá nhân, Gia đình, Bạn bè, Nhà trường.", type: "list_custom", placeholder: "Giả thuyết nguyên nhân..." },
-                    { id: 3, title: "Giả thuyết dự báo hệ quả chính sách", prompt: "Tình huống: Ban giám hiệu trường trung học quyết định áp dụng nội quy mới: \"Cấm tuyệt đối học sinh mang điện thoại di động vào khuôn viên trường học kể từ tuần sau.\"\n\nHãy xây dựng các giả thuyết về hệ quả có thể xảy ra: tích cực, tiêu cực và hệ quả bất ngờ không ai ngờ tới.", type: "list", fields: ["Giả thuyết tác động tích cực", "Giả thuyết tác động tiêu cực", "Các phản ứng phụ bất ngờ có thể xảy ra"] },
-                    { id: 4, title: "Giả thuyết điều kiện tưởng tượng", prompt: "Chọn một trong các kịch bản giả tưởng sau:\n1. Nếu Trái Đất tự quay quanh trục chậm đi một nửa tốc độ.\n2. Nếu một ngày của con người kéo dài đúng 30 tiếng.\n3. Nếu loài người tiến hóa không còn cần ngủ mỗi ngày.\n\nHãy viết ra ít nhất 20 giả thuyết thay đổi về đời sống, kinh tế, xã hội.", type: "list_custom", placeholder: "Giả thuyết thay đổi..." },
-                    { id: 5, title: "Giả thuyết phản biện luận điểm", prompt: "Luận điểm: \"Học trực tuyến trên Internet luôn luôn đem lại hiệu quả tiếp thu kiến thức tốt hơn so với học trực tiếp tại lớp học vật lý.\"\n\nHãy đưa ra ít nhất 10 giả thuyết trường hợp/bối cảnh chứng minh luận điểm trên hoàn toàn sai lầm.", type: "list_custom", placeholder: "Giả thuyết phản chứng..." },
-                    { id: 6, title: "Thiết kế phương án kiểm chứng giả thuyết", prompt: "Giả thuyết cần kiểm chứng: \"Việc vừa nghe nhạc không lời (Lofi/Classical) vừa học bài giúp học sinh ghi nhớ từ vựng tiếng Anh nhanh hơn so với việc học trong im lặng hoàn toàn.\"\n\nHãy thiết kế một thí nghiệm khoa học thực tế để kiểm chứng giả thuyết này: định nghĩa Biến độc lập, Biến phụ thuộc, nhóm đối chứng và quy trình thực hiện.", type: "list", fields: ["Xác định Biến độc lập & Biến phụ thuộc", "Thiết kế nhóm Thử nghiệm & nhóm Đối chứng", "Quy trình các bước thực hành thí nghiệm"] },
-                    { id: 7, title: "Giả thuyết tối ưu hóa cải tiến doanh thu", prompt: "Tình huống: Một cửa hàng sách truyền thống đang vắng khách muốn tăng trưởng doanh số bán hàng gấp đôi trong vòng 3 tháng.\n\nHãy đặt ra ít nhất 10 giả thuyết hành động để tăng doanh thu, đánh giá mỗi giải pháp theo: Độ khó thực hiện, Chi phí đầu tư, Hiệu quả kỳ vọng.", type: "list", fields: ["10 Giả thuyết hành động đột phá", "Đánh giá chi phí so với lợi ích mang lại", "Chọn lựa 3 giả thuyết hành động tối ưu nhất"] },
-                    { id: 8, title: "Giả thuyết đa kịch bản ra mắt sản phẩm", prompt: "Tình huống: Một nhóm học sinh chuẩn bị thành lập và bán sản phẩm \"Sổ tay quản lý thời gian tự thiết kế\" trong trường học.\n\nHãy lập giả thuyết cho 4 kịch bản thị trường:\n- Thành công bùng nổ vượt mong đợi\n- Thành công trung bình vừa đủ hòa vốn\n- Thất bại nhẹ tồn đống hàng\n- Thất bại nặng nề lỗ vốn\nChỉ rõ nguyên nhân đi kèm cho từng kịch bản.", type: "list", fields: ["Kịch bản Thành công rực rỡ & Nguyên nhân", "Kịch bản Hòa vốn bình thường", "Kịch bản Thất bại / Ế ẩm & Nguyên nhân sâu xa"] },
-                    { id: 9, title: "Giả thuyết kết hợp đa nguyên nhân", prompt: "Hiện tượng: Tuyến đường huyết mạch trước cổng trường học bị ngập sâu tới 50cm chỉ sau một cơn mưa kéo dài vẻn vẹn 20 phút.\n\nHãy đưa ra các giả thuyết kết hợp đa nhân tố thay vì chỉ một nguyên nhân đơn lẻ (ví dụ: lượng mưa + rác chặn cống + triều cường + sụt lún hạ tầng).", type: "list", fields: ["Giả thuyết kết hợp 1", "Giả thuyết kết hợp 2", "Đánh giá giả thuyết nào có tính thực tế cao nhất"] },
-                    { id: 10, title: "Kiến tạo và sàng lọc hệ thống giả thuyết lớn", prompt: "Chủ đề nghiên cứu: \"Vì sao học sinh trung học phổ thông tại Việt Nam gặp nhiều khó khăn khi giao tiếp tiếng Anh thực tế?\"\n\nYêu cầu:\n1. Đưa ra ít nhất 20 giả thuyết khác nhau.\n2. Gom nhóm chúng thành các trục nhân tố (Nhà trường, Gia đình, Bản thân, Môi trường xã hội).\n3. Đánh giá tính khả thi và khả năng kiểm chứng thực nghiệm của từng giả thuyết.", type: "list", fields: ["Trục nhân tố Bản thân học sinh", "Trục nhân tố Phương pháp giảng dạy", "Trục nhân tố Môi trường thực hành xã hội", "Đề xuất phương pháp thu thập dữ liệu kiểm chứng"] }
-                ]
-            },
-            8: {
-                levelTitle: "Đánh giá",
-                icon: "⭐",
-                theme: "from-purple-600 to-indigo-600",
-                badgeName: "Nhà Thẩm Định Tư Duy",
-                badgeIcon: "⚖️",
-                description: "Nhận định vấn đề đa chiều bằng hệ tiêu chí khoa học, cân nhắc rủi ro và ra quyết định chính xác.",
-                tasks: [
-                    { id: 1, title: "Đánh giá dựa trên ma trận tiêu chí", prompt: "Đối tượng: Bạn cần chọn mua một chiếc ba lô đi học trong số 3 mẫu thương hiệu khác nhau trên thị trường.\n\nHãy thiết lập hệ thống 6 tiêu chí đánh giá cốt lõi (ví dụ: Giá thành, Độ bền bỉ, Trọng lượng siêu nhẹ, Dung tích chứa đồ, Thiết kế thẩm mỹ, Độ nâng đỡ cột sống). Chấm điểm từ 1-10 cho mỗi mẫu ba lô và tính điểm tổng hợp để đưa ra quyết định mua.", type: "table", criteria: ["Giá thành", "Độ bền bỉ", "Trọng lượng nhẹ", "Dung tích chứa", "Thiết kế thẩm mỹ", "Nâng đỡ cột sống"], targets: ["Ba lô Thể thao A", "Ba lô Thời trang B", "Ba lô Công nghệ C"] },
-                    { id: 2, title: "Đánh giá ưu và nhược điểm đa bối cảnh", prompt: "Chủ đề: Phương thức học trực tiếp tại trường học vật lý và phương thức học trực tuyến qua Internet.\n\nLiệt kê chi tiết 15 điểm ưu việt và 15 điểm hạn chế của mỗi phương thức. Sau đó đánh giá mức độ hiệu quả của từng phương thức đối với các nhóm đối tượng học sinh khác nhau.", type: "list", fields: ["Ưu & Nhược điểm của Học trực tiếp", "Ưu & Nhược điểm của Học trực tuyến", "Đánh giá mức độ phù hợp cho từng nhóm tuổi học tập"] },
-                    { id: 3, title: "Đánh giá và sắp xếp độ ưu tiên cốt lõi", prompt: "Dưới đây là danh sách 8 nhân tố giúp một học sinh học tập xuất sắc:\n- Chăm chỉ rèn luyện\n- Giáo viên truyền cảm hứng\n- Gia đình hỗ trợ tài chính & tinh thần\n- Bạn bè đồng hành tích cực\n- Phương pháp học tập khoa học\n- Sức khỏe thể chất dồi dào\n- Quản lý quỹ thời gian tốt\n- Động lực nội tại mạnh mẽ\n\nHãy đánh giá và xếp hạng thứ tự ưu tiên quan trọng nhất và giải thích.", type: "list", fields: ["Thứ tự xếp hạng ưu tiên (1 đến 8)", "Giải thích logic cho vị trí số 1 và số 8"] },
-                    { id: 4, title: "Đánh giá độ tin cậy của thông tin mạng", prompt: "Bạn nhận được một tin tức gây chấn động xã hội từ 5 nguồn khác nhau:\n1. Trang báo điện tử chính thống của Nhà nước\n2. Trang bách khoa toàn thư mở Wikipedia\n3. Bài đăng của một người dùng bất kỳ trên Facebook có 10.000 lượt thích\n4. Video bình luận của một YouTuber công nghệ nổi tiếng\n5. Một người hàng xóm thân thiết trực tiếp kể lại\n\nHãy chấm điểm độ tin cậy (1-10) và thiết lập tiêu chí đánh giá nguồn tin.", type: "list", fields: ["Đánh giá độ tin cậy từng nguồn tin", "Tiêu chuẩn vàng để xác minh thông tin thật giả"] },
-                    { id: 5, title: "Đánh giá và quản trị rủi ro dự án", prompt: "Tình huống: Bạn và nhóm bạn chuẩn bị góp vốn mở một quầy bán nước trà sữa nhỏ trong hội chợ xuân của trường.\n\nHãy lập danh sách ít nhất 15 rủi ro vận hành (mất điện, ế khách, nguyên liệu hỏng, thời tiết mưa...) đánh giá mức độ thiệt hại tài chính và đưa ra phương án dự phòng khẩn cấp.", type: "list_custom", placeholder: "Rủi ro và cách xử lý..." },
-                    { id: 6, title: "Đánh giá so sánh lựa chọn phương án tối ưu", prompt: "Tình huống: Gia đình bạn chuẩn bị thực hiện chuyến du lịch tự túc từ Hà Nội vào Đà Nẵng.\nCác phương án vận tải: 1. Máy bay hàng không, 2. Tàu hỏa đường sắt, 3. Xe khách đường dài.\n\nHãy lập bảng đánh giá dựa trên: Chi phí tài chính, Thời gian di chuyển, Độ an toàn, Trải nghiệm thoải mái, Tác động khí thải nhà kính. Đưa ra lựa chọn tối ưu.", type: "list", fields: ["Đánh giá phương án Máy bay", "Đánh giá phương án Tàu hỏa", "Đánh giá phương án Xe khách", "Phương án tối ưu được chọn và lý lẽ thuyết phục"] },
-                    { id: 7, title: "Đánh giá phản biện lập luận giả định", prompt: "Cho phát biểu: \"Tất cả học sinh nên sử dụng Trí tuệ nhân tạo (AI) để giải quyết toàn bộ bài tập về nhà mỗi ngày nhằm tiết kiệm thời gian tối đa phục vụ các hoạt động vui chơi thể chất.\"\n\nHãy đánh giá toàn diện lập luận trên: các điểm mạnh thực tế, các điểm yếu chết người về tư duy, chỉ ra giả định sai lầm chưa được chứng minh.", type: "list", fields: ["Điểm mạnh của lập luận (nếu có)", "Những điểm yếu chết người trong tư duy", "Kết luận và định hướng đúng đắn"] },
-                    { id: 8, title: "Thiết lập hệ chỉ số đánh giá hiệu quả (KPIs)", prompt: "Tình huống: Trường học của bạn đã triển khai chiến dịch \"Nói không với điện thoại thông minh trong lớp học\" được 6 tháng.\n\nHãy đóng vai trò hiệu trưởng thiết lập một bộ chỉ số KPIs cụ thể để đánh giá khách quan xem chiến dịch này thành công hay thất bại thực sự. Đề xuất phương pháp thu thập dữ liệu sạch.", type: "list", fields: ["Hệ chỉ số đánh giá định lượng (KPIs)", "Phương pháp lấy dữ liệu khách quan không định kiến", "Tiêu chuẩn đạt yêu cầu của dự án"] },
-                    { id: 9, title: "Đánh giá đạo đức đa góc nhìn", prompt: "Tình huống: Bạn phát hiện người bạn thân nhất của mình đang có hành vi quay cóp, gian lận trực tiếp tài liệu trong kỳ thi cuối kỳ quyết định học bổng.\n\nHãy đánh giá hành động ứng xử của bạn dưới 5 góc nhìn đạo đức khác nhau: Tình bạn cá nhân, Trách nhiệm công dân lớp học, Công lý công bằng học thuật, Sự phát triển dài hạn của người bạn đó và Quy định kỷ luật của nhà trường.", type: "list", fields: ["Góc nhìn Tình bạn & Tình cảm cá nhân", "Góc nhìn Công bằng & Trách nhiệm học đường", "Quyết định ứng xử nhân văn & hợp lý nhất"] },
-                    { id: 10, title: "Báo cáo đánh giá tổng hợp ra quyết định lớn", prompt: "Tình huống: Bạn may mắn nhận được một giải thưởng trị giá 30 triệu đồng tiền mặt để đầu tư cho sự phát triển học tập bản thân.\nBạn cân nhắc các phương án: Mua laptop cấu hình cao, Đăng ký khóa học tiếng Anh bản xứ, Học lập trình công nghệ, Học kỹ năng mềm giao tiếp, Đầu tư mua tủ sách khoa học, Học chuyên sâu về ứng dụng AI.\n\nHãy thiết lập trọng số tiêu chí, chấm điểm khoa học và viết một báo cáo đánh giá dài 300 từ chứng minh quyết định cuối cùng của bạn.", type: "list", fields: ["Trọng số tiêu chí đánh giá", "Bảng chấm điểm quy đổi", "Báo cáo giải trình quyết định đầu tư (300 từ)"] }
-                ]
-            },
-            9: {
-                levelTitle: "Sáng tạo",
-                icon: "🎨",
-                theme: "from-pink-600 to-fuchsia-600",
-                badgeName: "Kiến Trúc Sư Ý Tưởng",
-                badgeIcon: "💡",
-                description: "Kiến tạo các sản phẩm độc đáo, quy trình tối ưu và phát minh giải pháp đột phá vượt qua ranh giới lối mòn.",
-                tasks: [
-                    { id: 1, title: "Tư duy phân kỳ sáng tạo ý tưởng", prompt: "Đối tượng: Một chiếc ghế gỗ bốn chân truyền thống.\n\nHãy vượt qua lối mòn tư duy chỉ dùng để ngồi, động não viết ra ít nhất 30 cách sử dụng độc lạ và hữu ích khác của chiếc ghế trong các bối cảnh khẩn cấp, vui chơi, sáng tạo nghệ thuật hay cuộc sống hàng ngày.", type: "list_custom", placeholder: "Ý tưởng sử dụng..." },
-                    { id: 2, title: "Cải tiến thiết kế sản phẩm", prompt: "Đối tượng: Chiếc cặp sách (ba lô) học sinh cấp 2 đang sử dụng hàng ngày.\n\nHãy chỉ ra ít nhất 10 điểm hạn chế, bất tiện nhất của thiết kế hiện tại và đề xuất các giải pháp cải tiến đột phá tích hợp công nghệ hoặc vật liệu mới để biến nó thành chiếc cặp thông minh hoàn hảo.", type: "list", fields: ["10 Bất tiện thực tế của cặp sách hiện nay", "Các đề xuất cải tiến đột phá", "Mô tả chiếc cặp sách thông minh tương lai"] },
-                    { id: 3, title: "Phương pháp kết hợp sáng tạo (SCAMPER)", prompt: "Hãy thực hiện phép lai ghép sáng tạo bằng cách kết hợp 2 đồ vật hoàn toàn xa lạ sau đây thành một sản phẩm thương mại độc đáo:\n1. Chiếc đồng hồ đeo tay cơ học\n2. Chiếc loa phát nhạc không dây bluetooth\n\nMô tả chi tiết cấu tạo, công dụng đột phá, nhóm khách hàng mục tiêu và hạn chế của sản phẩm mới.", type: "list", fields: ["Tên sản phẩm kết hợp & Ý tưởng thiết kế", "Mô tả tính năng đột phá hữu dụng", "Nhóm khách hàng mục tiêu sẽ chi tiền mua"] },
-                    { id: 4, title: "Thiết kế quy trình học tập thế hệ mới", prompt: "Chủ đề: Học và ghi nhớ sâu 100 từ vựng tiếng Anh học thuật mỗi tuần.\n\nHãy thiết kế ra một quy trình học tập độc quyền gồm từ 6-10 bước khoa học, áp dụng các nguyên lý ghi nhớ (như lặp lại ngắt quãng, liên tưởng hình ảnh, sơ đồ tư duy). So sánh tính ưu việt của quy trình này so với cách học vẹt truyền thống.", type: "list", fields: ["Sơ đồ quy trình từng bước học tập mới", "Các nguyên lý khoa học não bộ được áp dụng", "Bảng so sánh hiệu quả với phương pháp truyền thống"] },
-                    { id: 5, title: "Thiết kế trò chơi giáo dục tương tác", prompt: "Yêu cầu: Hãy sáng tạo ra một trò chơi thẻ bài (Card game) hoặc cờ bàn (Board game) giúp học sinh lớp 6 có thể ôn tập các kiến thức toán học hình học hoặc ngữ pháp tiếng Anh một cách vô cùng hào hứng.\n\nXây dựng chi tiết: Mục tiêu trò chơi, Thiết kế quân cờ/thẻ bài, Luật chơi chi tiết, Cách tính điểm và Điều kiện giành chiến thắng.", type: "list", fields: ["Tên trò chơi & Concept ý tưởng", "Luật chơi chi tiết từng lượt đi", "Thiết kế bộ thẻ bài/quân cờ & Cách tính điểm"] },
-                    { id: 6, title: "Thiết kế mô hình hệ thống sinh thái đô thị", prompt: "Chủ đề: \"Thành phố xanh thông minh giảm phát thải rác thải nhựa\".\n\nHãy đóng vai trò quy hoạch sư thiết kế một mô hình hệ thống đồng bộ tích hợp công nghệ xanh cho 5 lĩnh vực: Giao thông công cộng, Trường học không rác thải, Công viên tái chế, Năng lượng tái tạo tự cung tự cấp, Quy trình thu gom phân loại rác tự động bằng AI.", type: "list", fields: ["Giải pháp Giao thông & Năng lượng xanh", "Thiết kế trường học & công viên xanh thông minh", "Hệ thống quản lý rác thải AI tự động"] },
-                    { id: 7, title: "Sáng tạo giải pháp xã hội đột phá", prompt: "Vấn đề: Giảm thiểu tối đa 90% rác thải nhựa một lần trong toàn bộ khuôn viên trường học của bạn trong vòng 6 tháng.\n\nHãy sáng tạo ra ít nhất 10 giải pháp độc đáo, chọn lọc ra 3 giải pháp khả thi nhất và tích hợp chúng thành một chiến dịch truyền thông - hành động thực tiễn toàn diện.", type: "list", fields: ["10 Giải pháp độc đáo sáng tạo", "Kế hoạch tích hợp chiến dịch hành động chi tiết", "Cách thức đo lường sự hào hứng hưởng ứng của học sinh"] },
-                    { id: 8, title: "Sáng tạo vượt qua ràng buộc khắt khe", prompt: "Thử thách: Thiết kế một chiếc bàn học làm việc cá nhân đáp ứng đầy đủ các tiêu chí khắt khe sau:\n- Chi phí sản xuất hàng loạt cực rẻ dưới 500 nghìn đồng\n- Có thể gấp gọn hoàn toàn mỏng như một cuốn sổ lớn để cất dưới gầm giường\n- Sử dụng 100% vật liệu giấy carton tái chế siêu cứng bảo vệ môi trường\n- Người dùng có thể tự lắp ráp hoàn chỉnh không dùng ốc vít trong vòng 5 phút.", type: "list", fields: ["Mô tả kết cấu cơ học giúp gấp gọn", "Giải pháp vật liệu & cấu trúc chịu lực nặng", "Hướng dẫn lắp ráp nhanh trong 5 phút"] },
-                    { id: 9, title: "Sáng tạo theo góc nhìn đối tượng người dùng đặc biệt", prompt: "Hãy chọn một đồ vật quen thuộc: \"Chiếc ô đi mưa thông thường\".\n\nHãy tái thiết kế cấu tạo và chức năng của chiếc ô này để phục vụ chuyên biệt và hoàn hảo nhất cho 3 nhóm đối tượng đặc thù:\n1. Người cao tuổi bị thoái hóa xương khớp nặng\n2. Trẻ em mầm non tự đi bộ\n3. Các phi hành gia thám hiểm môi trường khắc nghiệt ngoài vũ trụ.", type: "list", fields: ["Phiên bản ô thông minh cho Người cao tuổi", "Phiên bản ô an toàn cho Trẻ em", "Phiên bản ô công nghệ cao cho Phi hành gia"] },
-                    { id: 10, title: "Thiết kế dự án khởi nghiệp hoàn chỉnh", prompt: "Hãy sáng tạo và thiết lập dự án: \"Câu lạc bộ học tập và ứng dụng Tư duy sáng tạo ứng phó biến đổi khí hậu tại trường học\".\n\nXây dựng kế hoạch chi tiết gồm:\n1. Đặt tên thương hiệu, Sứ mệnh tầm nhìn\n2. Sơ đồ tổ chức nhân sự vận hành\n3. Lịch trình hoạt động thực tiễn trong 6 tháng\n4. Kế hoạch tài chính & dự trù kinh phí\n5. Kênh truyền thông chiêu mộ thành viên\n6. Biện pháp quản lý rủi ro và tiêu chí đánh giá thành tựu.", type: "list", fields: ["Tên dự án, Sứ mệnh & Nhân sự vận hành", "Kế hoạch hành động 6 tháng chi tiết", "Kế hoạch tài chính & Phương án chiêu mộ thành viên", "Quản trị rủi ro phát sinh & Tiêu chí đo lường thành công"] }
-                ]
-            },
-            10: {
-                levelTitle: "Giải quyết vấn đề",
-                icon: "🏆",
-                theme: "from-red-600 to-rose-600",
-                badgeName: "Chuyên Gia Giải Quyết Vấn Đề",
-                badgeIcon: "🏆",
-                description: "Vận dụng tổng hợp toàn bộ 9 cấp độ tư duy trước đó để giải quyết triệt để các tình huống thực tế phức tạp.",
-                tasks: [
-                    { id: 1, title: "Giải quyết vấn đề cá nhân", prompt: "Tình huống: Bạn gặp phải vấn đề nghiêm trọng: Thường xuyên thức dậy muộn sát giờ, đi học/đi làm trễ và luôn trong trạng thái căng thẳng đầu ngày.\n\nHãy áp dụng quy trình giải quyết vấn đề:\n1. Định nghĩa rõ thực trạng bằng số liệu thu thập trong 7 ngày\n2. Phân tích nguyên nhân gốc rễ\n3. Đề xuất 10 giải pháp đột phá cải thiện giấc ngủ và thói quen ban đêm\n4. Lên lịch trình hành động cụ thể cho tuần tới.", type: "list", fields: ["Thống kê số liệu thực trạng thức muộn", "Xác định nguyên nhân gốc rễ hành vi", "10 Giải pháp cải thiện giấc ngủ & thói quen", "Kế hoạch hành động 7 ngày tới & Cam kết"] },
-                    { id: 2, title: "Giải quyết vấn đề tài chính gia đình", prompt: "Tình huống: Gia đình bạn muốn tiết kiệm và cắt giảm tối thiểu 20% tổng lượng điện tiêu thụ hàng tháng để bảo vệ môi trường và tối ưu tài chính sinh hoạt.\n\nHãy lập kế hoạch giải quyết:\n- Khảo sát các thiết bị ngốn điện nhiều nhất trong nhà\n- Phân tích hành vi sử dụng điện lãng phí của các thành viên\n- Đề xuất bộ quy tắc ứng xử tiết kiệm điện mới và cách thức theo dõi hóa đơn hàng tháng.", type: "list", fields: ["Bảng khảo sát thiết bị tiêu thụ điện lớn", "Bộ quy tắc ứng xử tiết kiệm điện cho gia đình", "Phương pháp theo dõi, giám sát hóa đơn thực tế"] },
-                    { id: 3, title: "Giải quyết khủng hoảng học lực", prompt: "Tình huống: Điểm số kết quả học tập môn Toán học của bạn liên tục sụt giảm nghiêm trọng trong 3 bài kiểm tra gần đây nhất.\n\nHãy lập phương án giải quyết vấn đề:\n- Phân tích lỗ hổng kiến thức hiện tại nằm ở chương nào\n- Đánh giá cách thức phân bổ thời gian học tập và phương pháp làm bài\n- Thiết lập mục tiêu điểm số mới và lộ trình tự học kết hợp tìm kiếm sự giúp đỡ trong 4 tuần.", type: "list", fields: ["Chẩn đoán lỗ hổng kiến thức & Phương pháp sai lệch", "Mục tiêu điểm số mới & Kế hoạch hành động 4 tuần", "Phương pháp đo lường sự tiến bộ hàng tuần"] },
-                    { id: 4, title: "Giải quyết xung đột nội bộ tập thể", prompt: "Tình huống: Hai người bạn thân thiết nhất trong nhóm học tập của bạn xảy ra mâu thuẫn cãi vã nảy lửa về việc phân chia công việc làm slide thuyết trình bài tập nhóm, dẫn tới nhóm có nguy cơ tan rã trước ngày nộp bài 3 ngày.\n\nHãy áp dụng quy trình hòa giải xung đột khách quan, phân tích góc nhìn từng bên, đề xuất phương án phân chia lại công việc công bằng và giải pháp giữ gìn đoàn kết.", type: "list", fields: ["Phân tích nguyên nhân & Góc nhìn của bạn A", "Phân tích nguyên nhân & Góc nhìn của bạn B", "Giải pháp phân chia lại công việc công bằng & Kế hoạch hòa giải"] },
-                    { id: 5, title: "Giải quyết khủng hoảng kinh doanh nhỏ", prompt: "Tình huống: Bạn làm chủ một tiệm tạp hóa nhỏ ở cổng trường học. Gần đây, một siêu thị mini hiện đại, sạch sẽ thuộc chuỗi lớn mở ngay đối diện khiến cửa hàng của bạn sụt giảm tới 60% lượng khách quen.\n\nHãy xây dựng chiến lược giải quyết khủng hoảng: Phân tích điểm mạnh cốt lõi của tiệm tạp hóa nhỏ, đề xuất các chương trình khuyến mãi độc đáo, cải tiến dịch vụ chăm sóc khách hàng cá nhân hóa mà chuỗi lớn không thể làm được.", type: "list", fields: ["Điểm mạnh cốt lõi & Điểm yếu của tiệm tạp hóa nhỏ", "5 Giải pháp đột phá thu hút lại khách quen", "Kế hoạch nâng cao chất lượng dịch vụ khách hàng"] },
-                    { id: 6, title: "Giải quyết vấn đề rác thải cộng đồng", prompt: "Tình huống: Khu phố nơi bạn sinh sống đang xuất hiện một bãi rác tự phát lớn, bốc mùi hôi thối ở góc ngã tư khuất, gây mất mỹ quan đô thị và ô nhiễm môi trường nghiêm trọng nhưng chưa được xử lý triệt để.\n\nHãy thiết kế dự án giải quyết vấn đề cộng đồng: Các bên liên quan cần tác động, chiến dịch nâng cao nhận thức người dân, giải pháp kỹ thuật giám sát (camera, biển báo...) và hoạt động ngày chủ nhật xanh dọn sạch bãi rác.", type: "list", fields: ["Xác định các bên liên quan & Cách tiếp cận", "Các giải pháp giám sát hành vi xả rác trộm", "Kế hoạch chiến dịch ngày chủ nhật xanh dọn dẹp và cải tạo bãi rác"] },
-                    { id: 7, title: "Giải quyết khủng hoảng tình huống khẩn cấp", prompt: "Tình huống: Một trận lũ lụt lớn bất ngờ xảy ra tại địa phương của bạn, gây chia cắt giao thông hoàn toàn, mất điện, mất nước sạch diện rộng và một số hộ dân bị cô lập hoàn toàn.\n\nHãy xây dựng kế hoạch ứng phó khủng hoảng chi tiết cho 3 giai đoạn: 1. 24 giờ đầu tiên (Cứu hộ sinh mạng & phân phối nhu yếu phẩm khẩn cấp), 2. 7 ngày tiếp theo (Ổn định nơi trú ẩn tạm thời & kiểm soát dịch bệnh), 3. 1 tháng tiếp theo (Tái thiết hạ tầng & phục hồi cuộc sống).", type: "list", fields: ["Kế hoạch ứng phó khẩn cấp 24 giờ đầu", "Kế hoạch cứu trợ và ổn định 7 ngày tiếp theo", "Kế hoạch khôi phục, tái thiết cuộc sống sau 1 tháng"] },
-                    { id: 8, title: "Thiết kế giải pháp kỹ thuật tối ưu hóa", prompt: "Tình huống: Trường học của bạn muốn cắt giảm một nửa lượng rác thải nhựa sử dụng một lần phát sinh hàng ngày từ căng tin trường học nhưng không muốn làm ảnh hưởng tới doanh thu bán hàng của các chủ hộ kinh doanh căng tin.\n\nHãy thiết kế giải pháp kỹ thuật và vận hành tối ưu: Hệ thống cốc, bát tái sử dụng, chính sách đặt cọc hoàn trả, ưu đãi giảm giá cho học sinh mang bình nước cá nhân và các sản phẩm thay thế thân thiện môi trường giá rẻ.", type: "list", fields: ["Hệ thống vận hành vòng đời cốc bát tái sử dụng mới", "Cơ chế tài chính đặt cọc hoàn trả (Deposit-Refund)", "Cách thức hợp tác hài hòa lợi ích với chủ hộ căng tin"] },
-                    { id: 9, title: "Giải quyết vấn đề mở phức tạp (Open-ended)", prompt: "Đề bài hóc búa: \"Làm thế nào để khơi dậy và phát triển mạnh mẽ niềm yêu thích đọc sách văn học cổ điển sâu sắc cho học sinh lớp 6 trong thời đại bùng nổ thông tin và mạng xã hội video ngắn hiện nay?\"\n\nHãy áp dụng tư duy đột phá giải quyết vấn đề mở này: Đặt các câu hỏi khảo sát tâm lý, phân tích rào cản hành vi, đề xuất các mô hình câu lạc bộ đọc sách nhập vai, sân khấu hóa tác phẩm hoặc ứng dụng app điện thoại tích hợp tích điểm đổi quà.", type: "list", fields: ["Phân tích sâu rào cản tâm lý khiến trẻ lười đọc sách cổ điển", "Giải pháp sân khấu hóa / Gamification / Nhập vai đọc sách độc đáo", "Kế hoạch tổ chức triển khai thí điểm tại một lớp học"] },
-                    { id: 10, title: "Dự án giải quyết vấn đề tổng hợp quy mô lớn", prompt: "Hãy tự chọn một vấn đề nhức nhối thực tế xung quanh bạn (Ví dụ: bạo lực ngôn từ trên mạng học đường, nghiện điện thoại mất tập trung học tập, kẹt xe ùn tắc nghiêm trọng trước cổng trường mỗi giờ tan học...).\n\nYêu cầu thực hiện một dự án hoàn chỉnh trải qua đầy đủ chu trình 10 giai đoạn tương ứng với 10 cấp độ tư duy bạn đã rèn luyện xuyên suốt từ Cấp độ 1 đến Cấp độ 10. Trình bày chi tiết từng giai đoạn.", type: "list", fields: ["Chủ đề lựa chọn & Khảo sát thực trạng (Cấp 1-3)", "Phân tích cấu trúc & Tư duy nhân quả nguyên nhân (Cấp 4-5)", "Suy luận kịch bản & Đặt giả thuyết giải pháp đột phá (Cấp 6-7)", "Đánh giá lựa chọn phương án tối ưu & Sáng tạo kế hoạch (Cấp 8-9)", "Quy trình thực thi, đo lường KPIs & Cải tiến liên tục (Cấp 10)"] }
-                ]
+    // 4 UNIFIED FRAMEWORKS
+    const STAGE_UNIFIED_FRAMEWORKS = {
+      1: {
+        name: 'KHUNG CHUNG GIAI ĐOẠN 1: THU THẬP & CẤU TRÚC DỮ LIỆU',
+        guide: 'Tích hợp đầy đủ: 5W1H (Định vị toàn diện), MECE (Phân loại không trùng - không sót) và T-Chart (So sánh đối lập).',
+        subSections: [
+          {
+            title: 'I. ĐỊNH VỊ DỮ LIỆU TỔNG QUAN (5W1H)',
+            fields: [
+              'WHO (Ai liên quan / thực hiện / chịu tác động?)',
+              'WHAT (Hiện tượng / Sự việc cụ thể gì diễn ra?)',
+              'WHERE (Xảy ra ở địa điểm / môi trường / kênh nào?)',
+              'WHEN (Thời điểm / Tần suất / Mốc thời gian khi nào?)',
+              'WHY (Lý do ban đầu / Mục đích bối cảnh là gì?)',
+              'HOW (Diễn biến ra sao? Chi phí / Nguồn lực tốn bao nhiêu?)'
+            ]
+          },
+          {
+            title: 'II. TƯ DUY PHÂN LOẠI CHUẨN (MECE)',
+            fields: [
+              'Tập dữ liệu gốc & Tiêu chí phân loại chọn',
+              'Nhóm 1 (Tách biệt hoàn toàn)',
+              'Nhóm 2 (Tách biệt hoàn toàn)',
+              'Nhóm 3 (Bổ sung bao phủ 100%)'
+            ]
+          },
+          {
+            title: 'III. SO SÁNH & CẤU TRÚC ĐỐI LẬP (T-Chart)',
+            fields: [
+              'Tiêu chí so sánh',
+              'Mô tả Mặt A / Phương án A',
+              'Mô tả Mặt B / Phương án B',
+              'Kết luận so sánh đối lập'
+            ]
+          }
+        ]
+      },
+      2: {
+        name: 'KHUNG CHUNG GIAI ĐOẠN 2: ĐỌC VỊ NGUYÊN NHÂN & LOGIC',
+        guide: 'Tích hợp đầy đủ: 5 Whys (Nguyên nhân chiều sâu), Fishbone (Nguyên nhân chiều rộng), Formal Logic (Suy luận quy nạp/diễn dịch/loại trừ), Logical Fallacies (Bắt lỗi ngụy biện), First Principles (Tư duy nguyên lý) & Counterfactual (Phản thực tế).',
+        subSections: [
+          {
+            title: 'I. PHÂN TÍCH NGUYÊN NHÂN CHIỀU SÂU & CHIỀU RỘNG (5 Whys & Fishbone)',
+            fields: [
+              'Sự cố bề nổi / Hiện tượng lỗi',
+              '5 Whys (Truy tìm nguyên nhân gốc rễ)',
+              'Fishbone - Con người (Manpower) & Phương pháp (Method)',
+              'Fishbone - Công cụ (Machine) & Môi trường (Environment)'
+            ]
+          },
+          {
+            title: 'II. LOGIC CHUẨN & BẮT LỖI NGỤY BIỆN',
+            fields: [
+              'Suy luận Logic (Quy nạp / Diễn dịch / Loại trừ)',
+              'Nhận diện & Vạch trần lỗi Ngụy biện (nếu có)'
+            ]
+          },
+          {
+            title: 'III. ĐỘT PHÁ TỪ GỐC & TƯ DUY PHẢN THỰC TẾ',
+            fields: [
+              'First Principles (Sự thật cơ bản nhất để xây lại từ gốc)',
+              'Counterfactual Thinking (Nếu quá khứ xảy ra khác đi -> Bài học)'
+            ]
+          }
+        ]
+      },
+      3: {
+        name: 'KHUNG CHUNG GIAI ĐOẠN 3: ĐÁNH GIÁ & SÁNG TẠO ĐA CHIỀU',
+        guide: 'Tích hợp đầy đủ: Khung đa góc nhìn theo quy mô (6 Hats / Stakeholder / ESG / Second-Order / STEEPLED), Kỹ thuật sáng tạo SCAMPER và Decision Matrix (Ma trận quyết định).',
+        subSections: [
+          {
+            title: 'I. ĐÁNH GIÁ ĐA GÓC NHÌN (Chọn phân tích theo Quy mô phù hợp)',
+            fields: [
+              'Cá nhân / Nhóm nhỏ (6 Chiếc mũ tư duy & Stakeholder Matrix)',
+              'Dự án / Kinh doanh (ESG & Second-Order Thinking - Tác động dây chuyền)',
+              'Xã hội / Chiến lược (STEEPLED - 8 Khía cạnh vĩ mô)'
+            ]
+          },
+          {
+            title: 'II. TẠO Ý TƯỞNG SÁNG TẠO ĐỘT PHÁ (SCAMPER)',
+            fields: [
+              'Ý tưởng SCAMPER (Substitute, Combine, Adapt, Modify, Put to other use, Eliminate, Reverse)'
+            ]
+          },
+          {
+            title: 'III. LỰA CHỌN PHƯƠNG ÁN TỐI ƯU (Decision Matrix)',
+            fields: [
+              'Ma trận quyết định (Tiêu chí, Trọng số % & Chấm điểm phương án)'
+            ]
+          }
+        ]
+      },
+      4: {
+        name: 'KHUNG CHUNG GIAI ĐOẠN 4: PHẢN XẠ THỰC CHIẾN & THỰC THI',
+        guide: 'Tích hợp đầy đủ: OODA Loop (Phản xạ quyết định siêu tốc), PDCA (Chu trình cải tiến) và SWOT to Action Plan (Kế hoạch chiến lược).',
+        subSections: [
+          {
+            title: 'I. PHẢN XẠ & ĐỊNH VỊ NHANH (OODA Loop)',
+            fields: [
+              'Observe (Quan sát) -> Orient (Định vị) -> Decide (Quyết định) -> Act (Hành động)'
+            ]
+          },
+          {
+            title: 'II. QUẢN TRỊ CẢI TIẾN LIÊN TỤC (PDCA Cycle)',
+            fields: [
+              'Plan (Kế hoạch SMART)',
+              'Do (Thử nghiệm) -> Check (Đo lường) -> Act (Chuẩn hóa quy trình)'
+            ]
+          },
+          {
+            title: 'III. CHUYỂN CHIẾN LƯỢC THÀNH HÀNH ĐỘNG (SWOT to Action Plan)',
+            fields: [
+              'Ma trận SWOT (Điểm mạnh, Điểm yếu, Cơ hội, Thách thức)',
+              'Kế hoạch hành động TOWS (Chiến lược SO, WO, ST, WT)'
+            ]
+          }
+        ]
+      }
+    };
+
+    // Knowledge Base Data
+    const KNOWLEDGE_BASE = {
+      phan_ung: [
+        { id: "pu1", title: "Muốn thể hiện cảm xúc", tag: "Emotional Expression", desc: "Tác động -> cảm xúc mạnh -> biểu lộ ra ngoài." },
+        { id: "pu2", title: "Muốn trì hoãn", tag: "Procrastination", desc: "Né tránh nhiệm vụ gây khó chịu để giảm stress tạm thời." },
+        { id: "pu3", title: "Muốn đáp trả", tag: "Reciprocity", desc: "Nhận lợi ích -> cảm thấy nghĩa vụ trả lại -> duy trì quan hệ." },
+        { id: "pu4", title: "Muốn đồng thuận", tag: "Social Proof", desc: "Thấy số đông làm -> tin đúng -> làm theo." },
+        { id: "pu5", title: "Muốn biện minh", tag: "Cognitive Dissonance", desc: "Tự hợp lý hóa hành vi để giảm mâu thuẫn nội tâm." }
+      ],
+      binh_phap: [
+        { id: "bp1", title: "Lợi dụ (Phao chuyên dẫn ngọc)", tag: "Mong muốn", desc: "Thả tép bắt tôm, dùng lợi nhỏ dụ lợi lớn." },
+        { id: "bp2", title: "Dục cầm cố túng", tag: "Thu phục", desc: "Muốn bắt nên thả để đối phương tự nguyện theo." },
+        { id: "bp3", title: "Khích tướng kế", tag: "Nóng nảy", desc: "Chọc tức, lợi dụng sự kiêu ngạo nóng nảy để sập bẫy." },
+        { id: "bp4", title: "Mượn đao giết người", tag: "Địch mạnh", desc: "Mượn tay kẻ khác hoặc môi trường để xử lý đối thủ." },
+        { id: "bp5", title: "Man thiên quá hải", tag: "Che giấu", desc: "Lợi dụng sự quen thuộc để che giấu mưu đồ thực sự." }
+      ],
+      dong_luc: [
+        { id: "dl1", title: "Chia nhỏ mục tiêu (Pomodoro)", tag: "Ability", desc: "Làm 25 phút + nghỉ 5 phút giảm cảm giác quá tải." },
+        { id: "dl2", title: "Cam kết công khai", tag: "Trigger", desc: "Tăng áp lực trách nhiệm từ sự nhìn nhận của tập thể." },
+        { id: "dl3", title: "Thưởng bất ngờ", tag: "Reinforcement", desc: "Tạo dopamine giữ chân người thực hiện thói quen." },
+        { id: "dl4", title: "Thử thách nhỏ", tag: "Positive Mind", desc: "Nhiệm vụ dễ ban đầu tạo đà chiến thắng (Momentum)." },
+        { id: "dl5", title: "Thói quen nối tiếp", tag: "Routine", desc: "Gắn hành vi mới ngay sau một thói quen cũ đã vững." }
+      ]
+    };
+
+    // Default Preset Exercises Dataset
+    const PRESET_EXERCISES = [
+      {
+        id: "ex_1",
+        group: "Mắt sắc - Óc nạo",
+        level: "Cấp độ 1 – Quan sát",
+        stageNum: 1,
+        code: "Bài 1",
+        title: "Quan sát đồ vật quanh bạn",
+        req: "Chọn một chiếc bút trên bàn. Liệt kê: 1. Màu sắc, 2. Hình dạng, 3. Chất liệu, 4. Kích thước ước lượng, 5. Có bao nhiêu bộ phận.",
+        skill: "Quan sát đặc điểm"
+      },
+      {
+        id: "ex_2",
+        group: "Đọc vị Nguyên nhân",
+        level: "Cấp độ 4 – Phân tích",
+        stageNum: 2,
+        code: "Bài 4",
+        title: "Phân tích nguyên nhân đi học muộn",
+        req: "Một học sinh thường xuyên đi học muộn. Hãy phân tích nguyên nhân đi muộn qua chuỗi nhân quả và logic.",
+        skill: "Phân tích nguyên nhân gốc"
+      },
+      {
+        id: "ex_3",
+        group: "Đánh giá & Sáng tạo",
+        level: "Cấp độ 9 – Sáng tạo",
+        stageNum: 3,
+        code: "Bài 2",
+        title: "Cải tiến chiếc cặp sách học sinh",
+        req: "Tìm điểm bất tiện của chiếc cặp sách hiện tại, đánh giá đa góc nhìn và đề xuất cải tiến sản phẩm mới.",
+        skill: "Đổi mới sáng tạo"
+      },
+      {
+        id: "ex_4",
+        group: "Phản xạ Thực chiến",
+        level: "Cấp độ 10 – Giải quyết vấn đề",
+        stageNum: 4,
+        code: "Bài 1",
+        title: "Giải quyết vấn đề cá nhân đi muộn",
+        req: "Lập dự án thực thi triệt phá thói quen đi học muộn trong 2 tuần.",
+        skill: "Giải quyết vấn đề cá nhân"
+      }
+    ];
+
+    // Initialize application
+    window.onload = function() {
+      lucide.createIcons();
+      initExercises();
+      updateApiStatusUI();
+      renderRoadmaps();
+      renderExerciseTable();
+      renderKnowledgeList();
+      renderHistoryList();
+      renderRadarChart();
+    };
+
+    function initExercises() {
+      if (exercises.length === 0) {
+        exercises = PRESET_EXERCISES;
+        localStorage.setItem('MIND_EXERCISES', JSON.stringify(exercises));
+      }
+    }
+
+    // ==========================================
+    // 2. NAVIGATION & TAB SWITCHING
+    // ==========================================
+
+    function switchMainTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+      // Update Top Nav Button Active UI
+      ['roadmap', 'workspace', 'ai-eval', 'knowledge'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (btn) {
+          if (t === tabName) {
+            btn.className = "flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 transition whitespace-nowrap bg-slate-800/40";
+          } else {
+            btn.className = "flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap";
+          }
+        }
+      });
+
+      if (tabName === 'settings') {
+        renderRadarChart();
+      }
+    }
+
+    function toggleFrameworkGuideModal(show = true) {
+      const modal = document.getElementById('frameworkGuideModal');
+      if (show) {
+        const stageNum = currentExercise ? currentExercise.stageNum : 1;
+        const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
+        
+        document.getElementById('modalFwTitle').innerText = fw.name;
+        
+        let contentHtml = `<p class="font-medium text-indigo-300 mb-3">${fw.guide}</p>`;
+        fw.subSections.forEach((sec) => {
+          contentHtml += `
+            <div class="space-y-1 bg-slate-950 p-3 rounded-lg border border-slate-800 mb-2">
+              <span class="font-bold text-cyan-400 block mb-1">${sec.title}</span>
+              ${sec.fields.map(f => `<div class="text-slate-300 text-[11px]">• ${f}</div>`).join('')}
+            </div>
+          `;
+        });
+
+        document.getElementById('modalFwContent').innerHTML = contentHtml;
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    // ==========================================
+    // 3. EXCEL IMPORT & CATEGORIZATION
+    // ==========================================
+
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          let importedList = [];
+          for (let i = 1; i < jsonRows.length; i++) {
+            const row = jsonRows[i];
+            if (row.length >= 5) {
+              const groupStr = row[0] || '';
+              const levelStr = row[1] || '';
+              const codeStr = row[2] || '';
+              const titleStr = row[3] || '';
+              const reqStr = row[4] || '';
+              const skillStr = row[5] || 'Rèn luyện tư duy';
+
+              let stageNum = 1;
+              if (levelStr.includes('Cấp độ 4') || levelStr.includes('Cấp độ 5') || levelStr.includes('Cấp độ 6')) stageNum = 2;
+              else if (levelStr.includes('Cấp độ 7') || levelStr.includes('Cấp độ 8') || levelStr.includes('Cấp độ 9')) stageNum = 3;
+              else if (levelStr.includes('Cấp độ 10')) stageNum = 4;
+
+              importedList.push({
+                id: 'ex_' + Date.now() + '_' + i,
+                group: groupStr,
+                level: levelStr,
+                stageNum: stageNum,
+                code: codeStr,
+                title: titleStr,
+                req: reqStr,
+                skill: skillStr
+              });
             }
+          }
+
+          if (importedList.length > 0) {
+            exercises = [...exercises, ...importedList];
+            localStorage.setItem('MIND_EXERCISES', JSON.stringify(exercises));
+            alert(`Đã nhập thành công ${importedList.length} bài tập từ Excel!`);
+            renderRoadmaps();
+            renderExerciseTable();
+          } else {
+            alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
+          }
+        } catch (err) {
+          alert("Lỗi khi đọc file Excel: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ==========================================
+    // 4. ROADMAP & EXERCISE RENDER
+    // ==========================================
+
+    function renderRoadmaps() {
+      const container = document.getElementById('mainRoadmapTree');
+      const stages = [
+        { num: 1, title: 'Giai Đoạn 1: Mắt Sắc - Óc Nạo', color: 'indigo' },
+        { num: 2, title: 'Giai Đoạn 2: Đọc Vị Logic', color: 'cyan' },
+        { num: 3, title: 'Giai Đoạn 3: Đánh Giá & Sáng Tạo', color: 'purple' },
+        { num: 4, title: 'Giai Đoạn 4: Phản Xạ Thực Chiến', color: 'emerald' }
+      ];
+
+      let html = '';
+      stages.forEach(st => {
+        const stageExs = exercises.filter(e => e.stageNum === st.num);
+
+        html += `
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+              <h3 class="font-bold text-xs text-${st.color}-400 uppercase tracking-wider">${st.title}</h3>
+              <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-800">${stageExs.length} bài</span>
+            </div>
+            <div class="space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+              ${stageExs.map(ex => `
+                <div onclick="selectExercise('${ex.id}')" class="p-2 bg-slate-950/60 hover:bg-slate-800 border border-slate-800/80 rounded-lg cursor-pointer transition flex justify-between items-center group">
+                  <div>
+                    <p class="text-xs font-medium text-slate-200 group-hover:text-indigo-300">[${ex.code}] ${ex.title}</p>
+                    <p class="text-[10px] text-slate-500">${ex.level}</p>
+                  </div>
+                  <i data-lucide="arrow-right-circle" class="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition"></i>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function renderExerciseTable() {
+      const tbody = document.getElementById('exerciseTableBody');
+      document.getElementById('exerciseCountBadge').innerText = `${exercises.length} bài`;
+
+      tbody.innerHTML = exercises.map(ex => `
+        <tr class="hover:bg-slate-800/50 transition">
+          <td class="p-2.5 text-slate-400">GĐ ${ex.stageNum}</td>
+          <td class="p-2.5">${ex.level}</td>
+          <td class="p-2.5 font-medium text-slate-200">${ex.title}</td>
+          <td class="p-2.5">
+            <button onclick="selectExercise('${ex.id}')" class="text-indigo-400 hover:underline font-semibold">Luyện tập</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function selectExercise(id) {
+      currentExercise = exercises.find(e => e.id === id);
+      if (!currentExercise) return;
+
+      document.getElementById('wsExerciseTitle').innerText = `[${currentExercise.code}] ${currentExercise.title}`;
+      document.getElementById('wsExerciseReq').innerText = currentExercise.req;
+      document.getElementById('wsSkillBadge').innerText = currentExercise.skill;
+      document.getElementById('currentLevelBadge').innerText = currentExercise.level;
+
+      renderStageUnifiedFramework(currentExercise.stageNum);
+      switchMainTab('workspace');
+    }
+
+    function renderStageUnifiedFramework(stageNum) {
+      const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
+
+      document.getElementById('activeFrameworkBadge').innerHTML = `
+        <span>${fw.name}</span>
+        <span class="text-[10px] bg-indigo-950 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800">Cố định GĐ ${stageNum}</span>
+      `;
+      document.getElementById('fwGuideTitle').innerText = fw.name;
+      document.getElementById('fwGuideDesc').innerText = fw.guide;
+
+      renderWorksheetInputs(fw);
+    }
+
+    // ==========================================
+    // 5. WORKSHEET INPUT & LIVE TREE VIEW ENGINE
+    // ==========================================
+
+    function renderWorksheetInputs(fw) {
+      const container = document.getElementById('worksheetInputContainer');
+      let fieldCounter = 0;
+      let html = '';
+
+      fw.subSections.forEach((sec) => {
+        html += `
+          <div class="space-y-2 border-b border-slate-800 pb-3">
+            <h4 class="text-xs font-bold text-indigo-400 bg-slate-900 p-2 rounded border border-slate-800/80">${sec.title}</h4>
+        `;
+
+        sec.fields.forEach((field) => {
+          html += `
+            <div class="space-y-1 pl-1">
+              <label class="text-[11px] font-semibold text-slate-300 flex justify-between">
+                <span>${field}</span>
+              </label>
+              <textarea id="input_field_${fieldCounter}" oninput="updateLiveTreeView()" rows="2" placeholder="Nhập suy nghĩ / phân tích..." class="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-cyan-500 custom-scrollbar transition"></textarea>
+            </div>
+          `;
+          fieldCounter++;
+        });
+
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
+      updateLiveTreeView();
+    }
+
+    function updateLiveTreeView() {
+      const treeContainer = document.getElementById('liveTreeView');
+      const stageNum = currentExercise ? currentExercise.stageNum : 1;
+      const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
+
+      let treeHtml = `
+        <div class="font-bold text-indigo-400 mb-1 flex items-center gap-1">
+          📁 [${currentExercise ? currentExercise.code : 'Bài Tập'}] ${currentExercise ? currentExercise.title : ''}
+        </div>
+        <div class="pl-3 tree-line space-y-1.5">
+          <div class="text-cyan-400 font-semibold tree-node relative pl-1">
+            📌 Khung Chung Giai Đoạn ${stageNum}
+          </div>
+          <div class="pl-3 tree-line space-y-2">
+      `;
+
+      let fieldCounter = 0;
+      fw.subSections.forEach((sec) => {
+        treeHtml += `
+          <div class="tree-node relative pl-1">
+            <span class="text-indigo-300 font-bold block mb-0.5">${sec.title}</span>
+            <div class="pl-3 tree-line space-y-1">
+        `;
+
+        sec.fields.forEach((field) => {
+          const inputVal = document.getElementById(`input_field_${fieldCounter}`)?.value.trim() || '(chưa nhập)';
+          treeHtml += `
+            <div class="tree-node relative pl-1">
+              <span class="text-slate-400 font-medium">${field}:</span>
+              <span class="text-slate-200 ${inputVal === '(chưa nhập)' ? 'italic text-slate-600' : ''}">${escapeHtml(inputVal)}</span>
+            </div>
+          `;
+          fieldCounter++;
+        });
+
+        treeHtml += `</div></div>`;
+      });
+
+      treeHtml += `</div></div>`;
+      treeContainer.innerHTML = treeHtml;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ==========================================
+    // 6. KNOWLEDGE BASE SEARCH & ACCORDION
+    // ==========================================
+
+    function switchKnowledgeTab(tabKey) {
+      currentKnowledgeTab = tabKey;
+      ['phan_ung', 'binh_phap', 'dong_luc'].forEach(k => {
+        const btn = document.getElementById(`kTab-${k}`);
+        if (k === tabKey) {
+          btn.className = 'flex-1 py-2.5 text-indigo-400 border-b-2 border-indigo-500 font-bold bg-slate-900';
+        } else {
+          btn.className = 'flex-1 py-2.5 text-slate-400 hover:text-slate-200';
+        }
+      });
+      renderKnowledgeList();
+    }
+
+    function renderKnowledgeList(filterQuery = '') {
+      const list = document.getElementById('knowledgeCardsList');
+      const items = KNOWLEDGE_BASE[currentKnowledgeTab];
+
+      const filtered = items.filter(i => 
+        i.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+        i.desc.toLowerCase().includes(filterQuery.toLowerCase()) ||
+        i.tag.toLowerCase().includes(filterQuery.toLowerCase())
+      );
+
+      list.innerHTML = filtered.map(item => `
+        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-indigo-500/50 transition space-y-1.5 group shadow-md">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-slate-200 group-hover:text-indigo-300">${item.title}</span>
+            <span class="text-[9px] bg-indigo-950 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800 font-mono">${item.tag}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-normal">${item.desc}</p>
+          <button onclick="insertKnowledgeToWorksheet('${item.title}')" class="text-[10px] text-indigo-400 hover:underline flex items-center gap-1 pt-1 opacity-80 group-hover:opacity-100 font-semibold">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Chèn đòn bẩy vào bài làm
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function searchKnowledgeBase() {
+      const query = document.getElementById('knowledgeSearchInput').value;
+      renderKnowledgeList(query);
+    }
+
+    function insertKnowledgeToWorksheet(title) {
+      const firstField = document.getElementById('input_field_0');
+      if (firstField) {
+        firstField.value += ` [Đòn bẩy: ${title}] `;
+        updateLiveTreeView();
+        alert(`Đã chèn "${title}" vào ô làm bài! Chuyển sang Tab "Đề Bài & Phiếu Làm Bài" để xem.`);
+      }
+    }
+
+    // ==========================================
+    // 7. TIME-BOXING CLOCK
+    // ==========================================
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      let remaining = seconds;
+      const display = document.getElementById('timerDisplay');
+      const text = document.getElementById('timerText');
+      display.classList.remove('hidden');
+      display.classList.add('flex');
+
+      timerInterval = setInterval(() => {
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        text.innerText = `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+        if (--remaining < 0) {
+          clearInterval(timerInterval);
+          alert('⏰ Hết giờ làm bài phản xạ! Hãy nộp bài để xem đánh giá AI.');
+        }
+      }, 1000);
+    }
+
+    // ==========================================
+    // 8. GEMINI API INTEGRATION
+    // ==========================================
+
+    function saveApiKey() {
+      const input = document.getElementById('apiKeyInput').value.trim();
+      if (input) {
+        apiKey = input;
+        localStorage.setItem('GEMINI_API_KEY', apiKey);
+        updateApiStatusUI();
+        alert('Đã lưu Gemini API Key thành công!');
+      }
+    }
+
+    function updateApiStatusUI() {
+      const dot = document.getElementById('apiStatusDot');
+      const text = document.getElementById('apiStatusText');
+      const input = document.getElementById('apiKeyInput');
+
+      if (apiKey) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        text.innerText = 'API Sẵn Sàng';
+        input.value = apiKey;
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-red-500';
+        text.innerText = 'Chưa cấu hình API';
+      }
+    }
+
+    async function generateAIExercise() {
+      if (!apiKey) {
+        alert('Vui lòng cấu hình Gemini API Key trong phần Cài Đặt trước!');
+        switchMainTab('settings');
+        return;
+      }
+
+      const stageNum = currentExercise ? currentExercise.stageNum : 1;
+      const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
+      const prompt = `Bạn là chuyên gia huấn luyện tư duy. Hãy tạo 1 bài tập thực tế ngẫu nhiên (kinh doanh, học tập hoặc cuộc sống) dành cho "${fw.name}".
+Yêu cầu trả về JSON định dạng duy nhất không chứa markdown format khác:
+{
+  "code": "AI-01",
+  "title": "Tên bài tập ngắn gọn",
+  "req": "Nội dung bối cảnh tình huống và yêu cầu thực hiện chi tiết",
+  "skill": "Kỹ năng rèn luyện chính"
+}`;
+
+      try {
+        const res = await callGeminiAPI(prompt);
+        const cleanJson = res.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(cleanJson);
+
+        currentExercise = {
+          id: 'ex_ai_' + Date.now(),
+          group: 'AI Tạo Tự Động',
+          level: `Giai đoạn ${stageNum}`,
+          stageNum: stageNum,
+          code: data.code || 'AI',
+          title: data.title,
+          req: data.req,
+          skill: data.skill
         };
 
-        // Initialize state inside localStorage
-        const storageKey = "mindgym_local_state";
-        let state = {
-            currentTab: "roadmap",
-            unlockedLevel: 1,
-            activeLevel: 1,
-            activeExId: 1,
-            userAnswers: {}, // key: "level_ex", val: { draft: string, final: string, list: [], score: null, feedback: "", date: "" }
-            streak: 0,
-            lastActiveDate: ""
+        document.getElementById('wsExerciseTitle').innerText = `[${currentExercise.code}] ${currentExercise.title}`;
+        document.getElementById('wsExerciseReq').innerText = currentExercise.req;
+        document.getElementById('wsSkillBadge').innerText = currentExercise.skill;
+        alert('Gemini đã tạo đề bài mới thành công!');
+      } catch (err) {
+        alert('Lỗi tạo đề AI: ' + err.message);
+      }
+    }
+
+    async function submitWorksheetForAI() {
+      if (!apiKey) {
+        alert('Vui lòng cấu hình Gemini API Key trong phần Cài Đặt để sử dụng tính năng chấm bài!');
+        switchMainTab('settings');
+        return;
+      }
+
+      if (!currentExercise) {
+        alert('Vui lòng chọn bài tập trước khi nộp!');
+        return;
+      }
+
+      const stageNum = currentExercise.stageNum;
+      const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
+      
+      let userAnswers = {};
+      let counter = 0;
+      fw.subSections.forEach(sec => {
+        sec.fields.forEach(field => {
+          userAnswers[field] = document.getElementById(`input_field_${counter}`)?.value || '';
+          counter++;
+        });
+      });
+
+      // Switch to AI Eval Tab & Show Loading
+      switchMainTab('ai-eval');
+      const container = document.getElementById('aiFeedbackContainer');
+      container.innerHTML = `
+        <div class="text-center py-12 space-y-3">
+          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="text-xs text-indigo-400 font-medium">Gemini AI đang phân tích bài làm theo 3 tiêu chí...</p>
+        </div>
+      `;
+
+      const prompt = `Bạn là chuyên gia đánh giá năng lực tư duy. Hãy chấm bài làm sau đây:
+ĐỀ BÀI: ${currentExercise.req}
+KHUNG TƯ DUY: ${fw.name}
+BÀI LÀM CỦA HỌC VIÊN:
+${JSON.stringify(userAnswers, null, 2)}
+
+Hãy đánh giá theo 3 tiêu chí:
+1. Đúng phương pháp (Áp dụng đúng khung tư duy)
+2. Đầy đủ (Sâu sắc, không bỏ sót góc khuất)
+3. Tính thực thi
+
+Trả về JSON duy nhất với cấu trúc:
+{
+  "score": 85,
+  "method_eval": "Đánh giá về đúng phương pháp...",
+  "fullness_eval": "Đánh giá về độ đầy đủ...",
+  "execution_eval": "Đánh giá về tính thực thi...",
+  "missing_perspective": "Góc nhìn bị bỏ quên mà người học cần bổ sung",
+  "advice": "Lời khuyên cải thiện ngắn gọn"
+}`;
+
+      try {
+        const res = await callGeminiAPI(prompt);
+        const cleanJson = res.replace(/```json/g, '').replace(/```/g, '').trim();
+        const evalData = JSON.parse(cleanJson);
+
+        document.getElementById('aiScoreBadge').innerText = `Điểm: ${evalData.score}/100`;
+        document.getElementById('aiScoreBadge').className = 'text-xs font-bold bg-emerald-950 text-emerald-300 px-3 py-1 rounded-full border border-emerald-800';
+
+        container.innerHTML = `
+          <div class="space-y-4 text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+              <span class="font-bold text-slate-200 text-sm">Kết Quả Đánh Giá Chi Tiết</span>
+              <span class="text-2xl font-black text-emerald-400">${evalData.score}/100</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="font-semibold text-indigo-300 flex items-center gap-1">🔹 1. Đúng Phương Pháp:</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.method_eval}</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="font-semibold text-cyan-300 flex items-center gap-1">🔹 2. Độ Đầy Đủ & Sâu Sắc:</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.fullness_eval}</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="font-semibold text-purple-300 flex items-center gap-1">🔹 3. Tính Thực Thi:</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.execution_eval}</p>
+            </div>
+
+            <div class="p-3 bg-amber-950/40 border border-amber-800/60 rounded-xl space-y-1">
+              <p class="font-bold text-amber-300 flex items-center gap-1">💡 Góc Nhìn Bị Bỏ Quên:</p>
+              <p class="text-slate-300 leading-relaxed">${evalData.missing_perspective}</p>
+            </div>
+
+            <div class="p-3 bg-indigo-950/40 border border-indigo-800/60 rounded-xl space-y-1">
+              <p class="font-bold text-indigo-300 flex items-center gap-1">📌 Lời Khuyên Cải Thiện:</p>
+              <p class="text-slate-300">${evalData.advice}</p>
+            </div>
+          </div>
+        `;
+
+        const historyItem = {
+          timestamp: new Date().toLocaleString(),
+          exerciseTitle: currentExercise.title,
+          stageNum: currentExercise.stageNum,
+          score: evalData.score,
+          evalData: evalData
         };
+        historyLogs.unshift(historyItem);
+        localStorage.setItem('MIND_HISTORY', JSON.stringify(historyLogs));
+        renderHistoryList();
 
-        // Load state from local storage
-        function loadState() {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                try {
-                    state = { ...state, ...JSON.parse(saved) };
-                } catch (e) {
-                    console.error("Lỗi khôi phục dữ liệu cục bộ:", e);
-                }
+      } catch (err) {
+        container.innerHTML = `<p class="text-xs text-red-400">Lỗi khi chấm bài bằng Gemini: ${err.message}</p>`;
+      }
+    }
+
+    async function callGeminiAPI(promptText) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    // ==========================================
+    // 9. PROGRESS DASHBOARD & RADAR CHART
+    // ==========================================
+
+    let radarChartObj = null;
+
+    function renderRadarChart() {
+      const ctx = document.getElementById('radarChartCanvas').getContext('2d');
+
+      const scores = { 1: [], 2: [], 3: [], 4: [] };
+      historyLogs.forEach(h => {
+        if (scores[h.stageNum]) scores[h.stageNum].push(h.score);
+      });
+
+      const avgG1 = calcAvg(scores[1]);
+      const avgG2 = calcAvg(scores[2]);
+      const avgG3 = calcAvg(scores[3]);
+      const avgG4 = calcAvg(scores[4]);
+
+      document.getElementById('scoreG1').innerText = `${avgG1}/100`;
+      document.getElementById('scoreG2').innerText = `${avgG2}/100`;
+      document.getElementById('scoreG3').innerText = `${avgG3}/100`;
+      document.getElementById('scoreG4').innerText = `${avgG4}/100`;
+
+      if (radarChartObj) radarChartObj.destroy();
+
+      radarChartObj = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['GĐ 1: Quan Sát', 'GĐ 2: Logic', 'GĐ 3: Đánh Giá', 'GĐ 4: Thực Chiến'],
+          datasets: [{
+            label: 'Năng Lực Tư Duy',
+            data: [avgG1, avgG2, avgG3, avgG4],
+            backgroundColor: 'rgba(99, 102, 241, 0.2)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            pointBackgroundColor: '#818cf8',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              angleLines: { color: '#334155' },
+              grid: { color: '#1e293b' },
+              pointLabels: { color: '#94a3b8', font: { size: 10 } },
+              ticks: { display: false, backdropColor: 'transparent' },
+              suggestedMin: 0,
+              suggestedMax: 100
             }
-            updateStreak();
+          },
+          plugins: {
+            legend: { display: false }
+          }
         }
-
-        function saveState() {
-            localStorage.setItem(storageKey, JSON.stringify(state));
-            updateOverallStats();
-        }
-
-        function updateStreak() {
-            const today = new Date().toDateString();
-            if (state.lastActiveDate) {
-                const lastDate = new Date(state.lastActiveDate);
-                const diffTime = Math.abs(new Date(today) - lastDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays === 1) {
-                    state.streak += 1;
-                    state.lastActiveDate = today;
-                } else if (diffDays > 1) {
-                    state.streak = 1;
-                    state.lastActiveDate = today;
-                }
-            } else {
-                state.streak = 1;
-                state.lastActiveDate = today;
-            }
-            document.getElementById("streak-indicator").innerText = `🔥 ${state.streak}`;
-        }
-    </script>
-
-    <!-- DOM UTILITIES & NAVIGATION CONTROLLER -->
-    <script>
-        // Custom Alert modal trigger
-        function showAlert(title, message, isSuccess = true) {
-            const alertModal = document.getElementById("custom-alert");
-            const alertTitle = document.getElementById("alert-title");
-            const alertMessage = document.getElementById("alert-message");
-            const iconContainer = document.getElementById("alert-icon-container");
-
-            alertTitle.innerText = title;
-            alertMessage.innerText = message;
-            
-            if (isSuccess) {
-                iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto bg-emerald-500/10 text-emerald-400 text-2xl";
-                iconContainer.innerText = "✓";
-            } else {
-                iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto bg-rose-500/10 text-rose-400 text-2xl";
-                iconContainer.innerText = "⚠";
-            }
-
-            alertModal.classList.remove("hidden");
-            setTimeout(() => {
-                alertModal.classList.add("opacity-100");
-                alertModal.firstElementChild.classList.remove("scale-95");
-            }, 10);
-        }
-
-        document.getElementById("alert-close-btn").addEventListener("click", () => {
-            const alertModal = document.getElementById("custom-alert");
-            alertModal.firstElementChild.classList.add("scale-95");
-            alertModal.classList.remove("opacity-100");
-            setTimeout(() => {
-                alertModal.classList.add("hidden");
-            }, 300);
-        });
-
-        // Gemini API Configuration Modal Actions
-        document.getElementById("header-api-btn").addEventListener("click", () => {
-            const apiModal = document.getElementById("api-modal");
-            const input = document.getElementById("api-key-input");
-            input.value = localStorage.getItem("mindgym_gemini_api_key") || "";
-            apiModal.classList.remove("hidden");
-            setTimeout(() => {
-                apiModal.classList.add("opacity-100");
-                apiModal.firstElementChild.classList.remove("scale-95");
-            }, 10);
-        });
-
-        document.getElementById("api-cancel-btn").addEventListener("click", closeApiModal);
-        function closeApiModal() {
-            const apiModal = document.getElementById("api-modal");
-            apiModal.firstElementChild.classList.add("scale-95");
-            apiModal.classList.remove("opacity-100");
-            setTimeout(() => {
-                apiModal.classList.add("hidden");
-            }, 300);
-        }
-
-        document.getElementById("api-save-btn").addEventListener("click", () => {
-            const input = document.getElementById("api-key-input").value.trim();
-            localStorage.setItem("mindgym_gemini_api_key", input);
-            closeApiModal();
-            showAlert("Thành công", "Đã lưu thông số cấu hình khóa bảo mật Gemini API Key!", true);
-        });
-
-        // Tab views Routing controller
-        const tabButtons = {
-            roadmap: document.getElementById("nav-btn-roadmap"),
-            practice: document.getElementById("nav-btn-practice"),
-            journal: document.getElementById("nav-btn-journal"),
-            profile: document.getElementById("nav-btn-profile")
-        };
-
-        const tabViews = {
-            roadmap: document.getElementById("view-roadmap"),
-            practice: document.getElementById("view-practice"),
-            journal: document.getElementById("view-journal"),
-            profile: document.getElementById("view-profile")
-        };
-
-        function switchTab(targetTab) {
-            state.currentTab = targetTab;
-            
-            // Toggle view visibilities
-            Object.keys(tabViews).forEach(tab => {
-                if (tab === targetTab) {
-                    tabViews[tab].classList.remove("hidden");
-                    tabButtons[tab].classList.add("text-indigo-400");
-                    tabButtons[tab].classList.remove("text-slate-500");
-                    // Scroll to top
-                    document.querySelector("main").scrollTop = 0;
-                } else {
-                    tabViews[tab].classList.add("hidden");
-                    tabButtons[tab].classList.remove("text-indigo-400");
-                    tabButtons[tab].classList.add("text-slate-500");
-                }
-            });
-
-            // Perform dynamic loads per view
-            if (targetTab === "roadmap") {
-                renderRoadmap();
-            } else if (targetTab === "practice") {
-                // Default to first pending exercise if active not set
-                loadExercise(state.activeLevel, state.activeExId);
-            } else if (targetTab === "journal") {
-                renderJournal();
-            } else if (targetTab === "profile") {
-                renderProfile();
-            }
-
-            // Manage active indicator dot
-            const activeDot = document.getElementById("active-exercise-dot");
-            if (targetTab === "practice") {
-                activeDot.classList.add("hidden");
-            } else {
-                activeDot.classList.remove("hidden");
-            }
-
-            saveState();
-        }
-
-        Object.keys(tabButtons).forEach(tab => {
-            tabButtons[tab].addEventListener("click", () => switchTab(tab));
-        });
-    </script>
-
-    <!-- ROADMAP VIEW RENDERER -->
-    <script>
-        function renderRoadmap() {
-            const listContainer = document.getElementById("levels-list");
-            listContainer.innerHTML = "";
-
-            for (let lvl = 1; lvl <= 10; lvl++) {
-                const data = exercisesDB[lvl];
-                const isUnlocked = lvl <= state.unlockedLevel;
-                
-                // Calculate level specific completion percentage
-                let completedInLvl = 0;
-                data.tasks.forEach(task => {
-                    const ansKey = `${lvl}_${task.id}`;
-                    if (state.userAnswers[ansKey] && state.userAnswers[ansKey].completed) {
-                        completedInLvl++;
-                    }
-                });
-                const percentage = (completedInLvl / 10) * 100;
-
-                const card = document.createElement("div");
-                card.className = `p-4 rounded-2xl border transition duration-300 ${
-                    isUnlocked 
-                        ? "bg-slate-900/80 border-slate-800 hover:border-slate-700 active:scale-[0.99] cursor-pointer" 
-                        : "bg-slate-900/30 border-slate-950 text-slate-500 select-none cursor-not-allowed"
-                }`;
-
-                let innerHTML = `
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${isUnlocked ? data.theme : 'from-slate-850 to-slate-900'} flex items-center justify-center text-xl shadow-md ${isUnlocked ? 'shadow-indigo-500/10 text-white' : 'text-slate-600'}">
-                                ${isUnlocked ? data.icon : '🔒'}
-                            </div>
-                            <div>
-                                <div class="text-4xs font-bold uppercase tracking-widest text-indigo-500">Cấp Độ ${lvl}</div>
-                                <h4 class="text-xs font-bold ${isUnlocked ? 'text-white' : 'text-slate-500'} mt-0.5">${data.levelTitle}</h4>
-                                <p class="text-4xs ${isUnlocked ? 'text-slate-400' : 'text-slate-600'} mt-1 leading-relaxed max-w-[200px]">${data.description}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xs font-extrabold ${isUnlocked ? 'text-white' : 'text-slate-600'}">${completedInLvl}/10</div>
-                            <div class="text-4xs text-slate-500 uppercase tracking-wider mt-0.5">Xong</div>
-                        </div>
-                    </div>
-                `;
-
-                if (isUnlocked && percentage > 0) {
-                    innerHTML += `
-                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between gap-4">
-                            <div class="flex-1 bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                                <div class="bg-gradient-to-r ${data.theme} h-full" style="width: ${percentage}%"></div>
-                            </div>
-                            <span class="text-4xs font-bold text-slate-400">${percentage}%</span>
-                        </div>
-                    `;
-                }
-
-                card.innerHTML = innerHTML;
-
-                if (isUnlocked) {
-                    card.addEventListener("click", () => {
-                        showLevelSelectorModal(lvl);
-                    });
-                }
-
-                listContainer.appendChild(card);
-            }
-        }
-
-        // LEVEL EXERCISE SELECTOR MODAL (Custom UI)
-        function showLevelSelectorModal(lvl) {
-            const data = exercisesDB[lvl];
-            
-            // Create backdrop overlay container
-            const overlay = document.createElement("div");
-            overlay.className = "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end transition-opacity duration-300 opacity-0";
-            
-            // Bottom sheet layout (excellent for mobile thumb usage)
-            const sheet = document.createElement("div");
-            sheet.className = "bg-slate-900 border-t border-slate-800 rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden transform translate-y-full transition-transform duration-300";
-            
-            sheet.innerHTML = `
-                <!-- Drag Handle -->
-                <div class="w-12 h-1.5 bg-slate-800 rounded-full mx-auto my-3 shrink-0"></div>
-                
-                <!-- Sheet Header -->
-                <div class="px-5 pb-3 border-b border-slate-800/80 flex items-center justify-between shrink-0">
-                    <div>
-                        <div class="text-4xs font-bold text-indigo-400 uppercase tracking-widest">Danh Sách Bài Tập</div>
-                        <h3 class="text-base font-extrabold text-white mt-0.5">${data.icon} Cấp ${lvl}: ${data.levelTitle}</h3>
-                    </div>
-                    <button class="close-sheet-btn p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition active:scale-90">
-                        ✕
-                    </button>
-                </div>
-                
-                <!-- Exercise Selection List (Scrollable) -->
-                <div class="p-4 overflow-y-auto space-y-2.5 flex-1 hide-scrollbar">
-                    ${data.tasks.map(task => {
-                        const ansKey = `${lvl}_${task.id}`;
-                        const isDone = state.userAnswers[ansKey] && state.userAnswers[ansKey].completed;
-                        const score = isDone ? state.userAnswers[ansKey].score : null;
-                        
-                        return `
-                            <button class="exercise-btn w-full text-left p-3.5 rounded-xl border transition flex items-center justify-between gap-3 active:scale-[0.98]" data-id="${task.id}">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
-                                        isDone 
-                                            ? 'bg-emerald-500/10 border border-emerald-500/35 text-emerald-400' 
-                                            : 'bg-slate-950 border border-slate-800 text-slate-400'
-                                    }">
-                                        ${isDone ? '✓' : task.id}
-                                    </div>
-                                    <div>
-                                        <h5 class="text-xs font-bold text-white">${task.title}</h5>
-                                        <p class="text-4xs text-slate-400 mt-0.5 truncate max-w-[200px]">${task.prompt.split("\n")[0]}</p>
-                                    </div>
-                                </div>
-                                ${score !== null ? `
-                                    <span class="text-3xs font-extrabold px-2 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg">
-                                        ${score}/10 Đ
-                                    </span>
-                                ` : `
-                                    <span class="text-4xs text-slate-500 uppercase tracking-wider">Bắt đầu →</span>
-                                `}
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
-                <div class="p-4 bg-slate-950 border-t border-slate-900 shrink-0">
-                    <button class="close-sheet-btn w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 rounded-xl transition text-xs active:scale-[0.98]">
-                        Đóng danh sách
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(overlay);
-            overlay.appendChild(sheet);
-            
-            // Animation triggers
-            setTimeout(() => {
-                overlay.classList.add("opacity-100");
-                sheet.classList.remove("translate-y-full");
-            }, 10);
-            
-            // Event listeners
-            const closeButtons = sheet.querySelectorAll(".close-sheet-btn");
-            closeButtons.forEach(btn => btn.addEventListener("click", destroySheet));
-            
-            function destroySheet() {
-                sheet.classList.add("translate-y-full");
-                overlay.classList.remove("opacity-100");
-                setTimeout(() => {
-                    document.body.removeChild(overlay);
-                }, 300);
-            }
-            
-            const exButtons = sheet.querySelectorAll(".exercise-btn");
-            exButtons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const exId = parseInt(btn.getAttribute("data-id"));
-                    destroySheet();
-                    state.activeLevel = lvl;
-                    state.activeExId = exId;
-                    switchTab("practice");
-                });
-            });
-        }
-    </script>
-
-    <!-- PRACTICE VIEW & FORM SYSTEM -->
-    <script>
-        function loadExercise(lvl, exId) {
-            state.activeLevel = lvl;
-            state.activeExId = exId;
-
-            const lvlData = exercisesDB[lvl];
-            const task = lvlData.tasks.find(t => t.id === exId);
-            const ansKey = `${lvl}_${exId}`;
-            const existingAnswer = state.userAnswers[ansKey] || {};
-
-            // Render Header Texts
-            document.getElementById("practice-level-title").innerText = `Cấp độ ${lvl} - ${lvlData.levelTitle}`;
-            document.getElementById("practice-ex-title").innerText = `${lvlData.icon} ${task.id}. ${task.title}`;
-            document.getElementById("practice-ex-prompt").innerText = task.prompt;
-            document.getElementById("exercise-skills-badge").innerText = task.title.replace("Quan sát ", "").replace("So sánh ", "").replace("Phân loại ", "");
-
-            // Reset and build input form
-            const ansContainer = document.getElementById("answers-container");
-            ansContainer.innerHTML = "";
-
-            if (task.type === "list") {
-                // Pre-structured static list inputs based on fields
-                task.fields.forEach((field, fIdx) => {
-                    const row = document.createElement("div");
-                    row.className = "space-y-1";
-                    
-                    const savedVal = (existingAnswer.fields && existingAnswer.fields[fIdx]) || "";
-
-                    row.innerHTML = `
-                        <label class="block text-slate-400 text-3xs font-bold uppercase tracking-wider">${field}</label>
-                        <textarea class="ex-field w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 text-xs focus:outline-none focus:border-indigo-500 transition placeholder-slate-600" rows="2" placeholder="Ghi nhận câu trả lời cho: ${field}...">${savedVal}</textarea>
-                    `;
-                    ansContainer.appendChild(row);
-                });
-            } else if (task.type === "list_custom") {
-                // Dynamic listing generator (highly beneficial on phones: type -> add to list)
-                const listData = existingAnswer.list || [];
-                
-                const wrapper = document.createElement("div");
-                wrapper.className = "space-y-3";
-                wrapper.innerHTML = `
-                    <label class="block text-slate-400 text-3xs font-bold uppercase tracking-wider">Danh sách các câu trả lời của bạn</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="custom-list-input" placeholder="${task.placeholder || 'Thêm mục mới...'}" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition">
-                        <button type="button" id="btn-add-list-item" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 rounded-xl transition text-xs flex items-center justify-center active:scale-95">+</button>
-                    </div>
-                    <ul id="custom-list-ul" class="space-y-1.5 max-h-48 overflow-y-auto">
-                        <!-- List items added dynamically -->
-                    </ul>
-                `;
-                ansContainer.appendChild(wrapper);
-
-                const listUl = document.getElementById("custom-list-ul");
-                const inputField = document.getElementById("custom-list-input");
-                const addButton = document.getElementById("btn-add-list-item");
-
-                function renderInteractiveList() {
-                    listUl.innerHTML = "";
-                    if (listData.length === 0) {
-                        listUl.innerHTML = `<li class="text-slate-500 text-4xs italic text-center py-2">Chưa có mục nào được thêm vào.</li>`;
-                        return;
-                    }
-
-                    listData.forEach((item, idx) => {
-                        const li = document.createElement("li");
-                        li.className = "flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300";
-                        li.innerHTML = `
-                            <span class="truncate max-w-[240px]">${idx + 1}. ${item}</span>
-                            <button type="button" class="text-rose-500 hover:text-rose-400 text-xs px-1.5 active:scale-90" data-idx="${idx}">✕</button>
-                        `;
-                        li.querySelector("button").addEventListener("click", () => {
-                            listData.splice(idx, 1);
-                            renderInteractiveList();
-                        });
-                        listUl.appendChild(li);
-                    });
-                }
-
-                // Add item event
-                function addItem() {
-                    const val = inputField.value.trim();
-                    if (val) {
-                        listData.push(val);
-                        inputField.value = "";
-                        renderInteractiveList();
-                        inputField.focus();
-                    }
-                }
-
-                addButton.addEventListener("click", addItem);
-                inputField.addEventListener("keydown", (e) => {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        addItem();
-                    }
-                });
-
-                renderInteractiveList();
-                // Store list data bound to wrapper instance for form submission
-                wrapper.listReference = listData;
-
-            } else if (task.type === "table") {
-                // Table input for ratings
-                const wrapper = document.createElement("div");
-                wrapper.className = "overflow-x-auto border border-slate-800 rounded-xl bg-slate-900/40 hide-scrollbar";
-                
-                let tableHTML = `
-                    <table class="w-full text-left border-collapse text-3xs">
-                        <thead>
-                            <tr class="bg-slate-900 text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                                <th class="p-2.5 font-bold">Tiêu chí</th>
-                                ${task.targets.map(t => `<th class="p-2.5 font-bold text-center">${t}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                const tableData = existingAnswer.table || {};
-
-                task.criteria.forEach((criterion, cIdx) => {
-                    tableHTML += `
-                        <tr class="border-b border-slate-800/60 last:border-0">
-                            <td class="p-2.5 font-semibold text-slate-300 whitespace-nowrap">${criterion}</td>
-                            ${task.targets.map((target, tIdx) => {
-                                const val = (tableData[cIdx] && tableData[cIdx][tIdx]) || "3";
-                                return `
-                                    <td class="p-2.5 text-center">
-                                        <select class="table-field-select bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 text-3xs focus:outline-none focus:border-indigo-500" data-criterion="${cIdx}" data-target="${tIdx}">
-                                            <option value="1" ${val === "1" ? 'selected':''}>1 ⭐️</option>
-                                            <option value="2" ${val === "2" ? 'selected':''}>2 ⭐️</option>
-                                            <option value="3" ${val === "3" ? 'selected':''}>3 ⭐️</option>
-                                            <option value="4" ${val === "4" ? 'selected':''}>4 ⭐️</option>
-                                            <option value="5" ${val === "5" ? 'selected':''}>5 ⭐️</option>
-                                        </select>
-                                    </td>
-                                `;
-                            }).join('')}
-                        </tr>
-                    `;
-                });
-
-                tableHTML += `
-                        </tbody>
-                    </table>
-                `;
-                wrapper.innerHTML = tableHTML;
-                ansContainer.appendChild(wrapper);
-            }
-
-            // Show feedback block if evaluated
-            const feedbackPanel = document.getElementById("feedback-panel");
-            if (existingAnswer.completed && existingAnswer.feedback) {
-                feedbackPanel.classList.remove("hidden");
-                document.getElementById("feedback-score").innerText = existingAnswer.score || "8";
-                document.getElementById("feedback-text").innerText = existingAnswer.feedback;
-                document.getElementById("feedback-source").innerText = existingAnswer.aiGraded ? "Chấm điểm bằng Google Gemini AI" : "Chấm điểm bằng trợ lý nội tuyến";
-            } else {
-                feedbackPanel.classList.add("hidden");
-            }
-        }
-
-        // Back button navigation
-        document.getElementById("practice-back-btn").addEventListener("click", () => {
-            switchTab("roadmap");
-        });
-
-        // Offline / Sandbox Evaluator Engine (Fallback in case of no Gemini API keys)
-        function sandboxEvaluateAnswer(task, answerObject) {
-            let totalWords = 0;
-            let totalItems = 0;
-
-            if (task.type === "list") {
-                answerObject.fields.forEach(field => {
-                    totalWords += field.split(/\s+/).filter(Boolean).length;
-                });
-                totalItems = answerObject.fields.filter(f => f.trim().length > 3).length;
-            } else if (task.type === "list_custom") {
-                totalItems = answerObject.list.length;
-                answerObject.list.forEach(item => {
-                    totalWords += item.split(/\s+/).filter(Boolean).length;
-                });
-            } else if (task.type === "table") {
-                totalItems = 6; // Fixed criteria
-                totalWords = 20; // Simulated
-            }
-
-            // Word-count and completeness heuristic score
-            let score = 5;
-            let advice = "";
-
-            if (totalItems === 0) {
-                score = 3;
-                advice = "Bạn chưa điền đầy đủ thông tin bài tập. Hãy cố gắng ghi nhận thêm dữ liệu để rèn luyện kỹ năng tư duy này.";
-            } else if (totalItems < 3) {
-                score = 5;
-                advice = "Bài làm tương đối ngắn. Tư duy chiều sâu đòi hỏi sự nhẫn nại quan sát và phân tích kỹ lưỡng các khía cạnh khác nhau. Hãy viết chi tiết hơn.";
-            } else if (totalItems >= 5 || totalWords > 40) {
-                score = 8;
-                advice = "Tuyệt vời! Bạn đã ghi chép rất chi tiết và trung thực các dữ kiện cần có. Trải nghiệm phân tích sâu sắc này sẽ làm sắc bén thêm trí tuệ của bạn mỗi ngày.";
-            } else {
-                score = 7;
-                advice = "Bài nộp đầy đủ và đúng quy chuẩn. Hãy tập trung khai thác đa diện các giác quan hoặc góc nhìn để tăng chất lượng giải thuật.";
-            }
-
-            return {
-                score: score,
-                feedback: `🤖 [Trợ Lý Ngoại Tuyến]:\n${advice}\n\n- Số lượng chi tiết ghi nhận: ${totalItems} mục.\n- Tổng lượng từ viết: ${totalWords} từ.`,
-                aiGraded: false
-            };
-        }
-
-        // Action: Save Draft
-        document.getElementById("btn-save-draft").addEventListener("click", () => {
-            saveAnswerData(false);
-            showAlert("Đã lưu nháp", "Bài làm của bạn đã được lưu nháp cục bộ thành công!", true);
-        });
-
-        // Save Function
-        function saveAnswerData(isCompleted = false) {
-            const lvl = state.activeLevel;
-            const exId = state.activeExId;
-            const task = exercisesDB[lvl].tasks.find(t => t.id === exId);
-            const ansKey = `${lvl}_${exId}`;
-
-            let answerData = {
-                completed: isCompleted,
-                date: new Date().toLocaleDateString()
-            };
-
-            const container = document.getElementById("answers-container");
-
-            if (task.type === "list") {
-                const inputs = container.querySelectorAll(".ex-field");
-                answerData.fields = Array.from(inputs).map(inp => inp.value.trim());
-            } else if (task.type === "list_custom") {
-                const wrapper = container.querySelector("div");
-                answerData.list = wrapper.listReference || [];
-            } else if (task.type === "table") {
-                const selects = container.querySelectorAll(".table-field-select");
-                let tableObj = {};
-                selects.forEach(sel => {
-                    const c = sel.getAttribute("data-criterion");
-                    const t = sel.getAttribute("data-target");
-                    if (!tableObj[c]) tableObj[c] = {};
-                    tableObj[c][t] = sel.value;
-                });
-                answerData.table = tableObj;
-            }
-
-            state.userAnswers[ansKey] = { ...state.userAnswers[ansKey], ...answerData };
-            saveState();
-            return answerData;
-        }
-    </script>
-
-    <!-- AI COACH ENGINE & GEMINI API IMPLEMENTATION -->
-    <script>
-        // Exponential backoff fetch helper
-        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    if (response.status === 429 && retries > 0) {
-                        await new Promise(res => setTimeout(res, delay));
-                        return fetchWithRetry(url, options, retries - 1, delay * 2);
-                    }
-                    throw new Error(`API returned status ${response.status}`);
-                }
-                return response;
-            } catch (error) {
-                if (retries > 0) {
-                    await new Promise(res => setTimeout(res, delay));
-                    return fetchWithRetry(url, options, retries - 1, delay * 2);
-                }
-                throw error;
-            }
-        }
-
-        async function evaluateWithGemini(task, answerData) {
-            const apiKey = localStorage.getItem("mindgym_gemini_api_key") || "";
-            if (!apiKey) {
-                return null; // Force offline fallback
-            }
-
-            // Construct rich context prompt
-            let userContentText = "";
-            if (task.type === "list") {
-                task.fields.forEach((field, fIdx) => {
-                    userContentText += `${field}: ${(answerData.fields && answerData.fields[fIdx]) || ''}\n`;
-                });
-            } else if (task.type === "list_custom") {
-                userContentText += `Danh sách câu trả lời:\n` + (answerData.list || []).map((item, idx) => `${idx+1}. ${item}`).join('\n');
-            } else if (task.type === "table") {
-                userContentText += `Kết quả so sánh tiêu chí:\n`;
-                task.criteria.forEach((criterion, cIdx) => {
-                    userContentText += `- ${criterion}:\n`;
-                    task.targets.forEach((target, tIdx) => {
-                        const score = (answerData.table && answerData.table[cIdx] && answerData.table[cIdx][tIdx]) || "Chưa chọn";
-                        userContentText += `  + ${target}: ${score} sao\n`;
-                    });
-                });
-            }
-
-            const systemInstruction = "Bạn là một huấn luyện viên tư duy toàn diện ưu tú (MindGym Coach). Hãy nhận xét câu trả lời của học sinh cho bài tập rèn luyện sau đây một cách khích lệ, chuyên môn sâu. Chỉ ra điểm làm tốt, điểm có thể khai thác sâu sắc hơn, và luôn kết luận bằng điểm số chuẩn xác từ 1-10.";
-            const userPrompt = `Bài tập: "${task.title}" thuộc Cấp độ "${exercisesDB[state.activeLevel].levelTitle}".\nYêu cầu bài tập: ${task.prompt}\n\nBài làm của học sinh:\n${userContentText}\n\nHãy nhận xét chi tiết, chấm điểm số (1-10) và khuyên nhủ ân cần. Hãy phản hồi hoàn toàn bằng Tiếng Việt.`;
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: userPrompt }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            score: { type: "NUMBER", description: "Điểm số chấm cho học viên từ 1 đến 10" },
-                            feedback: { type: "STRING", description: "Nhận xét chi tiết từ huấn luyện viên bao gồm điểm tốt, điểm yếu và cách phát triển tư duy thêm" }
-                        },
-                        required: ["score", "feedback"]
-                    }
-                }
-            };
-
-            const response = await fetchWithRetry(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-            const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-                return JSON.parse(rawText);
-            }
-            throw new Error("Không nhận diện được cấu trúc trả về của API.");
-        }
-
-        // Action: Submit & Evaluate
-        document.getElementById("btn-submit-answer").addEventListener("click", async () => {
-            const btn = document.getElementById("btn-submit-answer");
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Đang đánh giá bài tập...`;
-            btn.disabled = true;
-
-            try {
-                // 1. Save data first
-                const answerData = saveAnswerData(true);
-                const lvl = state.activeLevel;
-                const exId = state.activeExId;
-                const task = exercisesDB[lvl].tasks.find(t => t.id === exId);
-                const ansKey = `${lvl}_${exId}`;
-
-                let evalResult = null;
-                
-                // 2. Try Gemini API evaluation first
-                try {
-                    evalResult = await evaluateWithGemini(task, answerData);
-                    if (evalResult) {
-                        evalResult.aiGraded = true;
-                    }
-                } catch (apiErr) {
-                    console.warn("Lỗi gọi Gemini API, chuyển sang sandbox nội tuyến:", apiErr);
-                }
-
-                // 3. Fallback to heuristic local evaluation
-                if (!evalResult) {
-                    evalResult = sandboxEvaluateAnswer(task, answerData);
-                }
-
-                // 4. Update state with score & feedback
-                state.userAnswers[ansKey].score = evalResult.score;
-                state.userAnswers[ansKey].feedback = evalResult.feedback;
-                state.userAnswers[ansKey].aiGraded = evalResult.aiGraded;
-
-                // Unlock next level rules: If completed 7 exercises in level 1, unlock level 2, etc.
-                checkLevelUnlocks();
-
-                saveState();
-                
-                // 5. Update view UI
-                loadExercise(lvl, exId);
-                
-                showAlert("Nộp bài thành công!", `Bạn được chấm ${evalResult.score}/10 điểm cho bài tập này! Xem nhận xét chi tiết ở phần chân bài tập.`, true);
-
-            } catch (err) {
-                console.error(err);
-                showAlert("Lỗi", "Đã xảy ra sự cố trong quá trình nộp bài.", false);
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        });
-
-        // Trigger AI Feedback from secondary button
-        document.getElementById("btn-ai-feedback").addEventListener("click", () => {
-            const apiKey = localStorage.getItem("mindgym_gemini_api_key");
-            if (!apiKey) {
-                // Open settings first
-                document.getElementById("header-api-btn").click();
-                showAlert("Yêu cầu khóa API", "Vui lòng nhập khóa Google Gemini API Key để trò chuyện cùng Trợ lý AI thế hệ mới.", false);
-            } else {
-                document.getElementById("btn-submit-answer").click();
-            }
-        });
-
-        function checkLevelUnlocks() {
-            // Check completed exercises per level
-            let levelWithRequiredDone = 0;
-            for (let l = 1; l <= 10; l++) {
-                let completedCount = 0;
-                exercisesDB[l].tasks.forEach(t => {
-                    const key = `${l}_${t.id}`;
-                    if (state.userAnswers[key] && state.userAnswers[key].completed) {
-                        completedCount++;
-                    }
-                });
-                
-                // If at least 7 exercises done in current unlocked level, unlock next
-                if (completedCount >= 7) {
-                    levelWithRequiredDone = Math.max(levelWithRequiredDone, l);
-                }
-            }
-
-            const targetUnlock = Math.min(10, levelWithRequiredDone + 1);
-            if (targetUnlock > state.unlockedLevel) {
-                state.unlockedLevel = targetUnlock;
-                showAlert("TẬP LUYỆN ĐỘT PHÁ 🎉", `Chúc mừng bạn đã mở khóa thành công Cấp độ ${targetUnlock}: ${exercisesDB[targetUnlock].levelTitle}!`, true);
-            }
-        }
-    </script>
-
-    <!-- JOURNAL & HISTORY VIEWS -->
-    <script>
-        function renderJournal() {
-            const listContainer = document.getElementById("journal-list");
-            listContainer.innerHTML = "";
-
-            const searchVal = document.getElementById("journal-search").value.toLowerCase();
-            const filterLvl = document.getElementById("journal-filter-level").value;
-
-            let completedTasks = [];
-
-            for (let lvl = 1; lvl <= 10; lvl++) {
-                if (filterLvl !== "all" && parseInt(filterLvl) !== lvl) continue;
-
-                exercisesDB[lvl].tasks.forEach(task => {
-                    const ansKey = `${lvl}_${task.id}`;
-                    const ans = state.userAnswers[ansKey];
-
-                    if (ans && ans.completed) {
-                        if (searchVal && !task.title.toLowerCase().includes(searchVal) && !task.prompt.toLowerCase().includes(searchVal)) {
-                            return; // skip if search fails
-                        }
-
-                        completedTasks.push({
-                            lvl: lvl,
-                            task: task,
-                            ans: ans
-                        });
-                    }
-                });
-            }
-
-            document.getElementById("completed-count-badge").innerText = `${completedTasks.length} Bài`;
-
-            if (completedTasks.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="p-6 text-center text-slate-500 bg-slate-900/20 border border-slate-900 rounded-2xl">
-                        <span class="text-2xl">📓</span>
-                        <p class="text-xs mt-2">Chưa tìm thấy bài tập nào đã hoàn thành phù hợp bộ lọc.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            completedTasks.forEach(item => {
-                const itemDiv = document.createElement("div");
-                itemDiv.className = "bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between gap-3 active:scale-[0.99] transition duration-200 cursor-pointer";
-                
-                itemDiv.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-lg border border-slate-800">
-                            ${exercisesDB[item.lvl].icon}
-                        </div>
-                        <div>
-                            <div class="text-4xs font-bold text-indigo-400 uppercase tracking-widest">Cấp ${item.lvl} - Bài ${item.task.id}</div>
-                            <h4 class="text-xs font-bold text-white mt-0.5">${item.task.title}</h4>
-                            <p class="text-4xs text-slate-500 mt-1">Đã làm ngày ${item.ans.date || 'Gần đây'}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xs font-black text-indigo-400">${item.ans.score || '8'}/10 Đ</div>
-                        <div class="text-4xs text-slate-500 uppercase mt-1">Xem chi tiết</div>
-                    </div>
-                `;
-
-                itemDiv.addEventListener("click", () => {
-                    state.activeLevel = item.lvl;
-                    state.activeExId = item.task.id;
-                    switchTab("practice");
-                });
-
-                listContainer.appendChild(itemDiv);
-            });
-        }
-
-        // Add Listeners to Journal search & Filters
-        document.getElementById("journal-search").addEventListener("input", renderJournal);
-        document.getElementById("journal-filter-level").addEventListener("change", renderJournal);
-    </script>
-
-    <!-- PROFILE & ACHIVEMENT BADGES ENGINE -->
-    <script>
-        const badgesConfig = [
-            { id: "pioneer", name: "Người Tiên Phong", icon: "🚀", desc: "Hoàn thành bài tập tư duy đầu tiên.", condition: (ans) => Object.keys(ans).length >= 1 },
-            { id: "observer", name: "Quan Sát Viên", icon: "🔍", desc: "Hoàn thành toàn bộ Cấp độ 1.", condition: (ans) => checkLvlAllDone(ans, 1) },
-            { id: "comparer", name: "Nhà Đo Lường", icon: "⚖️", desc: "Hoàn thành toàn bộ Cấp độ 2.", condition: (ans) => checkLvlAllDone(ans, 2) },
-            { id: "analyst", name: "Mổ Xẻ Sự Vật", icon: "🧩", desc: "Hoàn thành toàn bộ Cấp độ 4.", condition: (ans) => checkLvlAllDone(ans, 4) },
-            { id: "streak_expert", name: "Đều Đặn Mỗi Ngày", icon: "🔥", desc: "Đạt chuỗi rèn luyện liên tiếp 3 ngày.", condition: (ans) => state.streak >= 3 },
-            { id: "ai_user", name: "Người Bạn Của AI", icon: "🤖", desc: "Được chấm điểm bởi Google Gemini AI.", condition: (ans) => Object.values(ans).some(a => a.aiGraded) },
-            { id: "master", name: "Kẻ Chinh Phục", icon: "🏆", desc: "Hoàn thành tổng số 50 bài tập trở lên.", condition: (ans) => Object.values(ans).filter(a => a.completed).length >= 50 }
-        ];
-
-        function checkLvlAllDone(answers, lvl) {
-            let done = 0;
-            for (let i = 1; i <= 10; i++) {
-                if (answers[`${lvl}_${i}`] && answers[`${lvl}_${i}`].completed) done++;
-            }
-            return done === 10;
-        }
-
-        function renderProfile() {
-            const badgesContainer = document.getElementById("badges-container");
-            badgesContainer.innerHTML = "";
-
-            let unlockedBadgesCount = 0;
-            let totalWords = 0;
-            let sumScores = 0;
-            let scoredCount = 0;
-
-            // Calculate words count & scores
-            Object.keys(state.userAnswers).forEach(key => {
-                const ans = state.userAnswers[key];
-                if (ans.completed) {
-                    if (ans.fields) {
-                        ans.fields.forEach(f => totalWords += f.split(/\s+/).filter(Boolean).length);
-                    }
-                    if (ans.list) {
-                        ans.list.forEach(item => totalWords += item.split(/\s+/).filter(Boolean).length);
-                    }
-                    if (ans.score) {
-                        sumScores += ans.score;
-                        scoredCount++;
-                    }
-                }
-            });
-
-            const avgScore = scoredCount > 0 ? (sumScores / scoredCount).toFixed(1) : "--";
-            
-            // Stats updates in UI
-            document.getElementById("stat-words-written").innerText = totalWords.toLocaleString();
-            document.getElementById("stat-avg-score").innerText = avgScore;
-            
-            // Set dynamic rank text based on unlocked levels
-            const ranks = [
-                "Tập Sự Quan Sát 🔍", "Học Giả So Sánh ⚖️", "Chuyên Gia Phân Loại 📁", "Kỹ Sư Phân Tích 🧩", 
-                "Nhà Phân Tích Nhân Quả ⛓️", "Nhà Toán Học Logic 🧠", "Nhà Đặt Giả Thuyết 🔬", 
-                "Hội Đồng Thẩm Định ⭐", "Kiến Trúc Sư Ý Tưởng 💡", "Bậc Thầy Giải Quyết Vấn Đề 🏆"
-            ];
-            document.getElementById("profile-rank").innerText = ranks[state.unlockedLevel - 1] || "Tập Sự Luyện Tập";
-
-            // Render badges
-            badgesConfig.forEach(badge => {
-                const isUnlocked = badge.condition(state.userAnswers);
-                if (isUnlocked) unlockedBadgesCount++;
-
-                const badgeCard = document.createElement("div");
-                badgeCard.className = `p-3 rounded-xl border flex items-center gap-3 transition duration-200 ${
-                    isUnlocked 
-                        ? 'bg-slate-900 border-indigo-500/30' 
-                        : 'bg-slate-900/20 border-slate-950 text-slate-600'
-                }`;
-
-                badgeCard.innerHTML = `
-                    <div class="text-2xl">${isUnlocked ? badge.icon : '🔒'}</div>
-                    <div>
-                        <h4 class="text-2xs font-bold ${isUnlocked ? 'text-white' : 'text-slate-500'}">${badge.name}</h4>
-                        <p class="text-4xs text-slate-400 mt-0.5 leading-relaxed">${badge.desc}</p>
-                    </div>
-                `;
-                badgesContainer.appendChild(badgeCard);
-            });
-
-            document.getElementById("unlocked-badge-stat").innerText = unlockedBadgesCount;
-        }
-
-        // Global dashboard statistics update helper
-        function updateOverallStats() {
-            let completedCount = 0;
-            let sumScores = 0;
-            let scoredCount = 0;
-
-            Object.keys(state.userAnswers).forEach(key => {
-                const ans = state.userAnswers[key];
-                if (ans.completed) {
-                    completedCount++;
-                    if (ans.score) {
-                        sumScores += ans.score;
-                        scoredCount++;
-                    }
-                }
-            });
-
-            const overallPct = Math.round((completedCount / 100) * 100);
-            
-            document.getElementById("overall-percentage").innerText = `${overallPct}%`;
-            document.getElementById("overall-progress-bar").style.width = `${overallPct}%`;
-            document.getElementById("total-done-stat").innerText = `${completedCount}/100`;
-            document.getElementById("avg-score-stat").innerText = scoredCount > 0 ? (sumScores / scoredCount).toFixed(1) : "--";
-        }
-    </script>
-
-    <!-- DATA MANAGEMENT HANDLERS (Backup & Recovery) -->
-    <script>
-        // Data Export
-        document.getElementById("btn-export-data").addEventListener("click", () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `MindGym_Data_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showAlert("Xuất thành công", "Đã xuất dữ liệu sao lưu thành tệp JSON tải về!", true);
-        });
-
-        // Data Import
-        document.getElementById("btn-import-data").addEventListener("click", () => {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.json';
-            
-            fileInput.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.readAsText(file, 'UTF-8');
-                
-                reader.onload = readerEvent => {
-                    try {
-                        const parsed = JSON.parse(readerEvent.target.result);
-                        if (parsed && typeof parsed === 'object') {
-                            state = parsed;
-                            saveState();
-                            switchTab("roadmap");
-                            showAlert("Thành công", "Đã khôi phục hoàn chỉnh tiến trình học tập từ tệp sao lưu!", true);
-                        }
-                    } catch (err) {
-                        showAlert("Lỗi phục hồi", "Tệp tin sao lưu bị hỏng hoặc không đúng định dạng.", false);
-                    }
-                }
-            };
-            fileInput.click();
-        });
-
-        // Hard Reset data
-        document.getElementById("btn-reset-data").addEventListener("click", () => {
-            // No native confirm, use beautiful absolute layout dialog
-            const overlay = document.createElement("div");
-            overlay.className = "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4";
-            overlay.innerHTML = `
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
-                    <span class="text-3xl">🗑️</span>
-                    <h3 class="text-base font-bold text-white mt-3 mb-2">Xác nhận xóa dữ liệu</h3>
-                    <p class="text-slate-400 text-xs mb-6 leading-relaxed">Hành động này sẽ xóa toàn bộ tiến độ, kết quả chấm điểm của 100 bài tập vĩnh viễn và không thể khôi phục lại.</p>
-                    <div class="flex gap-2.5">
-                        <button id="confirm-cancel" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3.5 rounded-xl transition text-xs font-semibold">Hủy bỏ</button>
-                        <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-3.5 rounded-xl transition text-xs font-bold shadow-lg shadow-red-600/10">Có, Xóa hết</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-
-            document.getElementById("confirm-cancel").addEventListener("click", () => document.body.removeChild(overlay));
-            document.getElementById("confirm-delete").addEventListener("click", () => {
-                localStorage.removeItem(storageKey);
-                state = {
-                    currentTab: "roadmap",
-                    unlockedLevel: 1,
-                    activeLevel: 1,
-                    activeExId: 1,
-                    userAnswers: {},
-                    streak: 0,
-                    lastActiveDate: ""
-                };
-                saveState();
-                document.body.removeChild(overlay);
-                switchTab("roadmap");
-                showAlert("Đã xóa dữ liệu", "Hệ thống đã thiết lập lại trạng thái ban đầu của ứng dụng.", true);
-            });
-        });
-    </script>
-
-    <!-- INITIALIZATION -->
-    <script>
-        window.onload = function() {
-            loadState();
-            switchTab("roadmap");
-            updateOverallStats();
-        }
-    </script>
+      });
+    }
+
+    function calcAvg(arr) {
+      if (arr.length === 0) return 0;
+      const sum = arr.reduce((a, b) => a + b, 0);
+      return Math.round(sum / arr.length);
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('historyListContainer');
+      if (historyLogs.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">Chưa có lịch sử làm bài nào.</p>';
+        return;
+      }
+
+      container.innerHTML = historyLogs.map(h => `
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg flex justify-between items-center text-xs">
+          <div>
+            <p class="font-bold text-slate-200">${h.exerciseTitle}</p>
+            <p class="text-[10px] text-slate-500">${h.timestamp} - Giai đoạn ${h.stageNum}</p>
+          </div>
+          <span class="font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">${h.score} điểm</span>
+        </div>
+      `).join('');
+    }
+  </script>
 </body>
 </html>
