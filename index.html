@@ -60,23 +60,25 @@
       </div>
     </div>
     
-    <!-- Time-boxing Clock & API Status Badge & Settings Toggle -->
+    <!-- Time-boxing Clock & API Status Badge / Key Setup -->
     <div class="flex items-center space-x-2 sm:space-x-3">
       <div id="timerDisplay" class="hidden items-center space-x-1 bg-amber-950/80 border border-amber-600/50 text-amber-300 px-2.5 py-1 rounded-full text-xs font-mono font-bold animate-pulse">
         <i data-lucide="timer" class="w-3.5 h-3.5"></i>
         <span id="timerText">05:00</span>
       </div>
-      <button onclick="switchMainTab('settings')" class="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
+      
+      <!-- API Key Quick Config Button -->
+      <button onclick="toggleApiKeyModal(true)" class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-300 transition">
         <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-red-500"></span>
-        <span class="hidden sm:inline" id="apiStatusText">Chưa cấu hình API</span>
-        <i data-lucide="settings" class="w-3.5 h-3.5 ml-1 sm:hidden"></i>
+        <span class="hidden sm:inline font-medium" id="apiStatusText">Cấu Hình API Key</span>
+        <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-400"></i>
       </button>
     </div>
   </header>
 
   <!-- MAIN NAVIGATION TABS BAR (4 TAB CHÍNH) -->
   <nav class="h-11 bg-slate-900/90 border-b border-slate-800 flex items-center justify-around md:justify-start md:px-4 md:space-x-2 z-10 flex-shrink-0 overflow-x-auto custom-scrollbar">
-    <button onclick="switchMainTab('roadmap')" id="tab-btn-roadmap" class="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 transition whitespace-nowrap">
+    <button onclick="switchMainTab('roadmap')" id="tab-btn-roadmap" class="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 transition whitespace-nowrap bg-slate-800/40">
       <i data-lucide="compass" class="w-4 h-4"></i>
       <span>Cây Lộ Trình</span>
     </button>
@@ -94,7 +96,7 @@
     </button>
   </nav>
 
-  <!-- MAIN CONTENT CONTAINER (SWITCHABLE 4 TABS) -->
+  <!-- MAIN CONTENT CONTAINER -->
   <div class="flex-1 bg-slate-950 flex flex-col overflow-hidden relative">
 
     <!-- ========================================== -->
@@ -103,17 +105,22 @@
     <section id="view-roadmap" class="tab-content flex-1 overflow-y-auto p-4 md:p-6">
       <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- Header & Import Action Bar -->
+        <!-- Header & Import/AI Generator Action Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
           <div>
             <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
               <i data-lucide="compass"></i> Cây Lộ Trình Luyện Tập 4 Giai Đoạn
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">Chọn bài tập từ cây lộ trình để tiến hành thực hành tư duy.</p>
+            <p class="text-xs text-slate-400 mt-0.5">Chọn bài tập có sẵn hoặc tạo đề mới bằng Gemini AI để bắt đầu thực hành.</p>
           </div>
-          <button onclick="switchMainTab('repository')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-md">
-            <i data-lucide="file-up" class="w-4 h-4"></i> Quản Lý / Import Excel
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="generateAIExercise()" class="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-md">
+              <i data-lucide="sparkles" class="w-4 h-4"></i> AI Tạo Bài Mới
+            </button>
+            <button onclick="switchMainTab('repository')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <i data-lucide="file-up" class="w-4 h-4"></i> Import Excel
+            </button>
+          </div>
         </div>
 
         <!-- Roadmap Tree Container -->
@@ -124,7 +131,7 @@
       </div>
     </section>
 
-    <!-- KHO BÀI (Hỗ trợ Import Excel trong Tab 1) -->
+    <!-- KHO BÀI (Hỗ trợ Import Excel) -->
     <section id="view-repository" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
       <div class="max-w-4xl mx-auto space-y-6">
         <div class="flex justify-between items-center">
@@ -219,9 +226,9 @@
             <p id="fwGuideDesc" class="text-[11px] text-slate-300 leading-normal">Hướng dẫn sử dụng khung sẽ xuất hiện tại đây.</p>
           </div>
 
-          <!-- AI Exercise Generator Button -->
-          <button onclick="generateAIExercise()" class="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md transition">
-            <i data-lucide="sparkles" class="w-4 h-4"></i> Tạo Đề Bài Mới Bằng Gemini AI
+          <!-- AI Exercise Generator Button (Feature 1) -->
+          <button onclick="generateAIExercise()" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg transition transform hover:-translate-y-0.5">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> AI Exercise Generator (Sáng Tạo Đề Mới)
           </button>
         </div>
       </div>
@@ -243,7 +250,7 @@
         <div class="flex-1 flex flex-col overflow-hidden">
           <!-- Top Input Form Area -->
           <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" id="worksheetInputContainer">
-            <!-- Dynamically rendered input fields according to Unified Framework -->
+            <!-- Dynamically rendered input fields -->
           </div>
 
           <!-- Bottom Sub-Section: LIVE TREE VIEW RESULT -->
@@ -260,10 +267,10 @@
           </div>
         </div>
 
-        <!-- Submit Action Bar -->
+        <!-- Submit Action Bar (Feature 2) -->
         <div class="p-3 bg-slate-900 border-t border-slate-800 flex gap-2 flex-shrink-0">
-          <button onclick="submitWorksheetForAI()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="send" class="w-4 h-4"></i> Nộp Bài & Chấm Điểm AI
+          <button onclick="submitWorksheetForAI()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-lg">
+            <i data-lucide="bot" class="w-4 h-4"></i> Nộp Bài & Gemini AI Chấm Bài Chi Tiết
           </button>
         </div>
       </div>
@@ -275,9 +282,9 @@
     <!-- ========================================== -->
     <section id="view-ai-eval" class="tab-content flex-1 overflow-y-auto p-4 md:p-6 hidden">
       <div class="max-w-3xl mx-auto space-y-4">
-        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center">
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center shadow-md">
           <span class="text-sm font-bold text-purple-400 flex items-center gap-2">
-            <i data-lucide="bot" class="w-5 h-5"></i> Kết Quả Chấm Bài Từ Gemini AI
+            <i data-lucide="bot" class="w-5 h-5"></i> Gemini AI Evaluator & Feedback (Chấm Bài Chuyên Sâu)
           </span>
           <span id="aiScoreBadge" class="text-xs font-bold bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">Chưa chấm</span>
         </div>
@@ -285,7 +292,7 @@
         <div id="aiFeedbackContainer" class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
           <div class="text-center py-12 space-y-3 text-slate-500">
             <i data-lucide="cpu" class="w-12 h-12 mx-auto text-slate-700"></i>
-            <p class="text-xs">Chưa có bài làm được chấm.<br>Hãy sang Tab <strong class="text-slate-300">"Đề Bài & Phiếu Làm Bài"</strong> hoàn thành bài làm và nhấn <strong class="text-emerald-400">"Nộp Bài & Chấm Điểm AI"</strong>.</p>
+            <p class="text-xs">Chưa có bài làm được chấm.<br>Hãy sang Tab <strong class="text-slate-300">"Đề Bài & Phiếu Làm Bài"</strong> hoàn thành bài làm và nhấn <strong class="text-emerald-400">"Nộp Bài & Gemini AI Chấm Bài Chi Tiết"</strong>.</p>
           </div>
         </div>
       </div>
@@ -328,7 +335,7 @@
         <!-- API Key Settings Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
           <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
-            <i data-lucide="key"></i> Cấu Hình Gemini API Key
+            <i data-lucide="key"></i> Quản Lý Cấu Hình Gemini API Key
           </h2>
           <div class="space-y-2">
             <label class="text-xs text-slate-300">Nhập Google Gemini API Key cá nhân của bạn:</label>
@@ -336,7 +343,7 @@
               <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="flex-1 p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
               <button onclick="saveApiKey()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition">Lưu Key</button>
             </div>
-            <p class="text-[11px] text-slate-500">API Key được lưu an toàn trong kho dữ liệu cục bộ (LocalStorage) trình duyệt của bạn, không gửi về bất kỳ máy chủ trung gian nào.</p>
+            <p class="text-[11px] text-slate-500">API Key được lưu an toàn trong LocalStorage cá nhân trên trình duyệt của bạn.</p>
           </div>
         </div>
 
@@ -381,6 +388,32 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- MODAL: API KEY SETUP QUICK CONFIG -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-sm text-indigo-400 flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4"></i> Cấu Hình Gemini API Key Cá Nhân
+        </h3>
+        <button onclick="toggleApiKeyModal(false)" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-300">API Key giúp kích hoạt tính năng <strong class="text-indigo-300">AI Exercise Generator</strong> (Tạo bài mới) và <strong class="text-emerald-300">AI Evaluator</strong> (Chấm bài sâu sắc).</p>
+        <div class="space-y-1">
+          <label class="text-slate-400 font-semibold">Gemini API Key:</label>
+          <input type="password" id="modalApiKeyInput" placeholder="AIzaSy..." class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+        </div>
+        <p class="text-[11px] text-slate-500 italic">• LƯU Ý BẢO MẬT: Key lưu hoàn toàn tại LocalStorage máy bạn.</p>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="toggleApiKeyModal(false)" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Hủy</button>
+          <button onclick="saveApiKeyFromModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold">Lưu Cấu Hình</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL: FRAMEWORK DETAILED GUIDE -->
@@ -630,7 +663,6 @@
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(`view-${tabName}`).classList.remove('hidden');
 
-      // Update Top Nav Button Active UI
       ['roadmap', 'workspace', 'ai-eval', 'knowledge'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         if (btn) {
@@ -644,6 +676,16 @@
 
       if (tabName === 'settings') {
         renderRadarChart();
+      }
+    }
+
+    function toggleApiKeyModal(show = true) {
+      const modal = document.getElementById('apiKeyModal');
+      if (show) {
+        document.getElementById('modalApiKeyInput').value = apiKey;
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
       }
     }
 
@@ -979,7 +1021,7 @@
     }
 
     // ==========================================
-    // 8. GEMINI API INTEGRATION
+    // 8. GEMINI API INTEGRATION & FEATURES
     // ==========================================
 
     function saveApiKey() {
@@ -992,37 +1034,48 @@
       }
     }
 
+    function saveApiKeyFromModal() {
+      const input = document.getElementById('modalApiKeyInput').value.trim();
+      if (input) {
+        apiKey = input;
+        localStorage.setItem('GEMINI_API_KEY', apiKey);
+        updateApiStatusUI();
+        toggleApiKeyModal(false);
+        alert('Đã cấu hình API Key thành công!');
+      }
+    }
+
     function updateApiStatusUI() {
       const dot = document.getElementById('apiStatusDot');
       const text = document.getElementById('apiStatusText');
-      const input = document.getElementById('apiKeyInput');
 
       if (apiKey) {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
         text.innerText = 'API Sẵn Sàng';
-        input.value = apiKey;
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-red-500';
-        text.innerText = 'Chưa cấu hình API';
+        text.innerText = 'Cấu Hình API Key';
       }
     }
 
+    // TÍNH NĂNG 1: SÁNG TẠO BÀI TẬP MỚI (AI EXERCISE GENERATOR)
     async function generateAIExercise() {
       if (!apiKey) {
-        alert('Vui lòng cấu hình Gemini API Key trong phần Cài Đặt trước!');
-        switchMainTab('settings');
+        alert('Vui lòng cấu hình Gemini API Key trước khi sử dụng tính năng AI!');
+        toggleApiKeyModal(true);
         return;
       }
 
       const stageNum = currentExercise ? currentExercise.stageNum : 1;
       const fw = STAGE_UNIFIED_FRAMEWORKS[stageNum];
-      const prompt = `Bạn là chuyên gia huấn luyện tư duy. Hãy tạo 1 bài tập thực tế ngẫu nhiên (kinh doanh, học tập hoặc cuộc sống) dành cho "${fw.name}".
-Yêu cầu trả về JSON định dạng duy nhất không chứa markdown format khác:
+      
+      const prompt = `Bạn là chuyên gia huấn luyện tư duy đỉnh cao. Hãy sáng tạo 1 bài tập thực tế mới hoàn toàn (thuộc bối cảnh kinh doanh, học tập hoặc đời sống thực tế) phù hợp với "${fw.name}".
+Yêu cầu trả về định dạng JSON duy nhất không chứa markdown hay ký tự thừa nào khác ngoài JSON:
 {
-  "code": "AI-01",
-  "title": "Tên bài tập ngắn gọn",
-  "req": "Nội dung bối cảnh tình huống và yêu cầu thực hiện chi tiết",
-  "skill": "Kỹ năng rèn luyện chính"
+  "code": "AI-GĐ${stageNum}",
+  "title": "Tên bài tập ngắn gọn cuốn hút",
+  "req": "Bối cảnh tình huống thực tế và yêu cầu thực hiện chi tiết theo khung tư duy",
+  "skill": "Kỹ năng rèn luyện cốt lõi"
 }`;
 
       try {
@@ -1032,33 +1085,39 @@ Yêu cầu trả về JSON định dạng duy nhất không chứa markdown form
 
         currentExercise = {
           id: 'ex_ai_' + Date.now(),
-          group: 'AI Tạo Tự Động',
+          group: 'AI Generator',
           level: `Giai đoạn ${stageNum}`,
           stageNum: stageNum,
-          code: data.code || 'AI',
+          code: data.code || `AI-${stageNum}`,
           title: data.title,
           req: data.req,
           skill: data.skill
         };
 
+        // Chuyển sang Tab Workspace để hiển thị bài mới
         document.getElementById('wsExerciseTitle').innerText = `[${currentExercise.code}] ${currentExercise.title}`;
         document.getElementById('wsExerciseReq').innerText = currentExercise.req;
         document.getElementById('wsSkillBadge').innerText = currentExercise.skill;
-        alert('Gemini đã tạo đề bài mới thành công!');
+        document.getElementById('currentLevelBadge').innerText = currentExercise.level;
+        
+        renderStageUnifiedFramework(stageNum);
+        switchMainTab('workspace');
+        alert('Gemini AI đã khởi tạo thành công 1 bài tập mới!');
       } catch (err) {
         alert('Lỗi tạo đề AI: ' + err.message);
       }
     }
 
+    // TÍNH NĂNG 2: CHẤM BÀI & PHẢN HỒI CHUYÊN SÂU (AI EVALUATOR & FEEDBACK)
     async function submitWorksheetForAI() {
       if (!apiKey) {
-        alert('Vui lòng cấu hình Gemini API Key trong phần Cài Đặt để sử dụng tính năng chấm bài!');
-        switchMainTab('settings');
+        alert('Vui lòng cấu hình Gemini API Key trước để sử dụng tính năng chấm bài!');
+        toggleApiKeyModal(true);
         return;
       }
 
       if (!currentExercise) {
-        alert('Vui lòng chọn bài tập trước khi nộp!');
+        alert('Vui lòng chọn hoặc tạo bài tập trước khi nộp!');
         return;
       }
 
@@ -1080,29 +1139,30 @@ Yêu cầu trả về JSON định dạng duy nhất không chứa markdown form
       container.innerHTML = `
         <div class="text-center py-12 space-y-3">
           <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p class="text-xs text-indigo-400 font-medium">Gemini AI đang phân tích bài làm theo 3 tiêu chí...</p>
+          <p class="text-xs text-indigo-400 font-medium">Gemini AI đang phân tích bài làm theo 3 tiêu chí chuyên sâu...</p>
         </div>
       `;
 
-      const prompt = `Bạn là chuyên gia đánh giá năng lực tư duy. Hãy chấm bài làm sau đây:
-ĐỀ BÀI: ${currentExercise.req}
-KHUNG TƯ DUY: ${fw.name}
-BÀI LÀM CỦA HỌC VIÊN:
+      const prompt = `Bạn là chuyên gia đánh giá và huấn luyện tư duy. Hãy phân tích bài làm của học viên theo thông tin bên dưới:
+BÀI TẬP: ${currentExercise.title}
+YÊU CẦU ĐỀ BÀI: ${currentExercise.req}
+KHUNG TƯ DUY ÁP DỤNG: ${fw.name}
+NỘI DUNG BÀI LÀM CỦA HỌC VIÊN:
 ${JSON.stringify(userAnswers, null, 2)}
 
-Hãy đánh giá theo 3 tiêu chí:
-1. Đúng phương pháp (Áp dụng đúng khung tư duy)
-2. Đầy đủ (Sâu sắc, không bỏ sót góc khuất)
-3. Tính thực thi
+Hãy chấm điểm và phản hồi theo 3 tiêu chí chuẩn:
+1. Đúng phương pháp (Áp dụng đúng cấu trúc khung tư duy)
+2. Đầy đủ (Sâu sắc, bao quát, không bỏ sót góc khuất)
+3. Tính thực thi (Khả thi trong thực tế)
 
-Trả về JSON duy nhất với cấu trúc:
+Trả về định dạng JSON duy nhất không chứa bất kỳ markdown hay ký tự thừa nào khác ngoài JSON:
 {
-  "score": 85,
-  "method_eval": "Đánh giá về đúng phương pháp...",
-  "fullness_eval": "Đánh giá về độ đầy đủ...",
-  "execution_eval": "Đánh giá về tính thực thi...",
+  "score": 88,
+  "method_eval": "Đánh giá chi tiết về Đúng Phương Pháp...",
+  "fullness_eval": "Đánh giá chi tiết về Độ Đầy Đủ & Sâu Sắc...",
+  "execution_eval": "Đánh giá chi tiết về Tính Thực Thi...",
   "missing_perspective": "Góc nhìn bị bỏ quên mà người học cần bổ sung",
-  "advice": "Lời khuyên cải thiện ngắn gọn"
+  "advice": "Lời khuyên cải thiện nâng tầm tư duy"
 }`;
 
       try {
@@ -1116,33 +1176,33 @@ Trả về JSON duy nhất với cấu trúc:
         container.innerHTML = `
           <div class="space-y-4 text-xs">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-              <span class="font-bold text-slate-200 text-sm">Kết Quả Đánh Giá Chi Tiết</span>
+              <span class="font-bold text-slate-200 text-sm">Kết Quả Đánh Giá Bài Làm</span>
               <span class="text-2xl font-black text-emerald-400">${evalData.score}/100</span>
             </div>
 
             <div class="space-y-1.5">
-              <p class="font-semibold text-indigo-300 flex items-center gap-1">🔹 1. Đúng Phương Pháp:</p>
-              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.method_eval}</p>
+              <p class="font-semibold text-indigo-300 flex items-center gap-1">🔹 1. Đúng Phương Pháp (Methodology):</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 leading-relaxed">${evalData.method_eval}</p>
             </div>
 
             <div class="space-y-1.5">
-              <p class="font-semibold text-cyan-300 flex items-center gap-1">🔹 2. Độ Đầy Đủ & Sâu Sắc:</p>
-              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.fullness_eval}</p>
+              <p class="font-semibold text-cyan-300 flex items-center gap-1">🔹 2. Độ Đầy Đủ & Sâu Sắc (Fullness & Depth):</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 leading-relaxed">${evalData.fullness_eval}</p>
             </div>
 
             <div class="space-y-1.5">
-              <p class="font-semibold text-purple-300 flex items-center gap-1">🔹 3. Tính Thực Thi:</p>
-              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">${evalData.execution_eval}</p>
+              <p class="font-semibold text-purple-300 flex items-center gap-1">🔹 3. Tính Thực Thi (Feasibility):</p>
+              <p class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 leading-relaxed">${evalData.execution_eval}</p>
             </div>
 
-            <div class="p-3 bg-amber-950/40 border border-amber-800/60 rounded-xl space-y-1">
-              <p class="font-bold text-amber-300 flex items-center gap-1">💡 Góc Nhìn Bị Bỏ Quên:</p>
+            <div class="p-3.5 bg-amber-950/40 border border-amber-800/60 rounded-xl space-y-1">
+              <p class="font-bold text-amber-300 flex items-center gap-1">💡 Góc Nhìn Bị Bỏ Quên (Missing Perspectives):</p>
               <p class="text-slate-300 leading-relaxed">${evalData.missing_perspective}</p>
             </div>
 
-            <div class="p-3 bg-indigo-950/40 border border-indigo-800/60 rounded-xl space-y-1">
-              <p class="font-bold text-indigo-300 flex items-center gap-1">📌 Lời Khuyên Cải Thiện:</p>
-              <p class="text-slate-300">${evalData.advice}</p>
+            <div class="p-3.5 bg-indigo-950/40 border border-indigo-800/60 rounded-xl space-y-1">
+              <p class="font-bold text-indigo-300 flex items-center gap-1">📌 Lời Khuyên Cải Thiện Chuyên Sâu:</p>
+              <p class="text-slate-300 leading-relaxed">${evalData.advice}</p>
             </div>
           </div>
         `;
